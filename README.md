@@ -57,8 +57,19 @@ Multiple dice
 3d4=[2, 2, 3] 2d6=[4, 1] ->12
 ```
 
-```python
+## Seed
 
+At the beginning of the session, `roll` file (see below), or when running the interpreter, you can set a seed for reproducibility:
+
+```python
+>>> SEED=1234
+Set SEED=1234
+```
+
+or 
+
+```bash
+roller --seed 1234
 ```
 
 ## Operations
