@@ -32,6 +32,7 @@ class Roller:
                 raise ValueError("Source file should end with `.roll`")
             self.run_file(file)
         else:
+            # TODO: Allow seed declaration when running prompt?
             self.run_prompt()
 
     def run_file(self, file: Path) -> None:

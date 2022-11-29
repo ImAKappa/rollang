@@ -4,7 +4,7 @@ A DSL and interpreter for DnD rolls. Inspired by [Roll20 Macro Language](https:/
 
 > This is just for fun. For actual DnD games, nothing beats real dice :)
 
-# Usage
+---
 
 ## Dice
 
@@ -34,6 +34,8 @@ Annotate dice
 2d4:"Fire attack" 2d8:"Lightning"
 ```
 
+---
+
 ## Rolling
 
 You can evaluate dice using the `roll` command.
@@ -57,6 +59,8 @@ Multiple dice
 3d4=[2, 2, 3] 2d6=[4, 1] ->12
 ```
 
+---
+
 ## Seed
 
 At the beginning of the session, `roll` file (see below), or when running the interpreter, you can set a seed for reproducibility:
@@ -72,6 +76,8 @@ or
 roller --seed 1234
 ```
 
+---
+
 ## Operations
 
 Addition
@@ -82,8 +88,8 @@ Addition
 ```
 
 ```python
->>> roll 1d20:"Fire"+4:"Buff"
-roll 1d20:"Fire"=6 +4:"Buff" ->10
+>>> roll 1d20:"Fire"-4:"Debuff"
+roll 1d20:"Fire"=6 -4:"Debuff" ->10
 ```
 
 Comparison
@@ -103,6 +109,8 @@ Comparison
 3d6=[2, 2, 2] ->6 success
 ```
 
+---
+
 ### **Operator Precedence**
 
 1. Roll
@@ -113,6 +121,8 @@ Comparison
 >>> roll 1d20+4 > 9
 1d20=7 +4 ->11 success
 ```
+
+---
 
 ## Advantage/Disadvantage
 
@@ -132,6 +142,8 @@ Disadvantage
 1d6=5 2d4=[1, 4] ->10
 ```
 
+---
+
 ## Attack/Saving throws
 
 ### Armor Class
@@ -142,8 +154,18 @@ AC=15
 ```
 
 ```python
->>> ac(15)+2
+>>> ac(15+2)
 AC=17
+```
+
+```python
+>>> ac(15)+2
+AC=15 +2 ->17
+```
+
+```python
+>>> ac(15)+2:"Spell effect"
+AC=15 +2:"Spell effect" ->17
 ```
 
 ### Attack rolls
@@ -186,21 +208,23 @@ Natural twenty auto-succeeds
 
 ### Difficulty Class
 
-Same as Armor Class
+Same as Armor Class, but use `dc`
 
 ```cpp
->>> dc(15)+2
-DC=17
+>>> dc(15)+2:"Spell effect"
+DC=15 +2:"Spell effect" ->17
 ```
 
 ### Saving Throws
 
-Saving throws function the same as attack rolls, but just have a different identifier
+Saving throws function the same as attack rolls, but just have a different identifier for semantic convenience
 
 ```cpp
 >>> sav +4 +2 >= dc(15)
 1d20=12 +4 +2 ->18 success
 ```
+
+---
 
 ## Variables
 
@@ -216,13 +240,17 @@ Save rolls in variables using the `let` keyword
 
 If you want to save, but not evaluate, the roll then just bind a set of dice to an identifier
 
-> For now, it's required to end the identifier name with a question mark to indicate it is probabilistic
+> For now, it's required to end the identifier name with a question mark to indicate it is probabilistic.
+>
+> This is analogous to how some languages use question marks to explicitly denote possible null types (TypeScript, Kotlin, etc.). However, in `rollang`, there is no such thing as a `null` type because variables cannot be `null`.
 
 ```rust
 >>> let flame_strike? = [2d8+4, 1d4]
 >>> flame_strike?
 2d8+4 1d4
 ```
+
+> The goal is to have automatic type inference, but I dunno how to do that yet. It sounds scary and complicated, but we'll see. 
 
 Then, when you want to evaluate the roll
 
@@ -231,11 +259,15 @@ Then, when you want to evaluate the roll
 2d8=[5, 2] +4 1d4=6 ->17
 ```
 
+---
+
 ## Comments
 
 C-style comments: `//`
 
-Multiline comments are not supported.
+Multiline comments are not supported, yet, though they will also use C-style `/* */`. However, you will be able to nest them.
+
+---
 
 ## Source files
 
