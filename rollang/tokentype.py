@@ -4,32 +4,53 @@
 Module for defining tokens and token types for lexer
 """
 
-from enum import Enum, auto
+from enum import Enum
 
 class TokType(Enum):
     # Single character tokens
-    MINUS = auto()
-    PLUS = auto()
-    COMMA = auto()
+    MINUS = "-"
+    PLUS = "+"
+    COMMA = ","
 
     # One or two character tokens
-    EQUAL = auto()
-    GREATER = auto()
-    GREATER_EQUAL = auto()
-    LESS = auto()
-    LESS_EQUAL = auto()
+    EQUAL = "="
+    EQUAL_EQUAL = "=="
+    GREATER = ">"
+    GREATER_EQUAL = ">="
+    LESS = "<"
+    LESS_EQUAL = "<="
+    BANG = "!"
+    BANG_EQUAL = "!="
+    LBRACKET = "["
+    RBRACKET = "]"
 
     # Literals
-    IDENTIFIER = auto()
-    NUMBER = auto()
-    DIE = auto()
-    AC = auto()
-    DC = auto()
+    IDENTIFIER = "IDENTIFIER"
+    SUCCESS = "SUCCESS" # True
+    FAILURE = "FAILURE" # False
+    NUMBER = "NUMBER"
+    STRING = "STRING"
+    DICE = "DICE"
+    AC = "AC"
+    DC = "DC"
 
     # Keywords
-    ROLL = auto()
-    ADV = auto()
-    DDV = auto()
-    ATK = auto()
-    SAV = auto()
-    SEED = auto()
+    ROLL = "ROLL"
+    ADV = "ADV"
+    DDV = "DDV"
+    ATK = "ATK"
+    SAV = "SAV"
+    SEED = "SEED"
+    LET = "LET"
+
+    EOF = "EOF"
+
+keywords = {
+    "roll": TokType.ROLL,
+    "adv": TokType.ADV,
+    "ddv": TokType.DDV,
+    "atk": TokType.ATK,
+    "sav": TokType.SAV,
+    "seed": TokType.SEED,
+    "let": TokType.LET,
+}

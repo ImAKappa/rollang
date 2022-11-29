@@ -7,8 +7,9 @@ import io
 from pathlib import Path
 import sys
 from dataclasses import dataclass
+from rich import print
 
-from scanner import Scanner
+from scanner import Scanner, ScannerError
 
 @dataclass
 class ProgramInfo:
@@ -53,16 +54,21 @@ class Roller:
 
     def run(self, source: str) -> None:
         scanner = Scanner(source)
-        tokens = scanner.scan_tokens()
-
-        # For now, just print the tokens
-        for token in tokens:
-            print(token)        
-        return NotImplemented
+        try:
+            tokens = scanner.scan_tokens()
+        except ScannerError as e:
+            self.error(e.line, str(e))
+        else:
+            # For now, just print the tokens
+            for token in tokens:
+                print(token)
+        return
 
     def error(self, line: int, message: str) -> None:
         self.report(line, "", message)
+        return
     
     def report(self, line: int, where: str, message: str):
         print(f"[line {line}] Error {where}: {message}")
         self.had_error = True
+        return

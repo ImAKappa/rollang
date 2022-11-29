@@ -12,3 +12,4 @@ class Token:
     toktype: TokType
     lexeme: str
     literal: object
+    line: int
