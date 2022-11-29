@@ -27,7 +27,10 @@ class Roller:
         if len(args) > 2:
             print("Usage: roller [script]")
         elif len(args) == 2:
-            self.run_file(args[1])
+            file: str = args[1]
+            if not file.endswith(".roll"):
+                raise ValueError("Source file should end with `.roll`")
+            self.run_file(file)
         else:
             self.run_prompt()
 

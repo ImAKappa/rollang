@@ -62,8 +62,8 @@ Multiple dice
 At the beginning of the session, `roll` file (see below), or when running the interpreter, you can set a seed for reproducibility:
 
 ```python
->>> SEED=1234
-Set SEED=1234
+>>> seed(1234)
+seed=1234
 ```
 
 or 
@@ -137,52 +137,50 @@ Disadvantage
 ### Armor Class
 
 ```python
->>> ac15
+>>> ac(15)
 AC=15
 ```
 
 ```python
->>> ac15+2
+>>> ac(15)+2
 AC=17
 ```
 
 ### Attack rolls
 
-```python
-atk <modifiers>
-```
+`atk` is just a semantic shorthand for `roll 1d20`
 
 ```python
 >>> atk
-1d20=5 pending
+1d20=7
 ```
 
 ```python
->>> atk +4
-1d20=5 +4 ->9 pending
+>>> atk+4
+1d20=5 +4 ->9
 ```
 
-```python
->>> atk >= ac15
+```cpp
+>>> atk >= ac(15)
 1d20=12 failure
 ```
 
-```python
->>> atk +4 +2 >= ac15
+```cpp
+>>> atk +4 +2 >= ac(15)
 1d20=12 +4 +2 ->18 success
 ```
 
 Natural one auto-fails
 
-```python
->>> atk +100 >= ac15
+```cpp
+>>> atk +100 >= ac(15)
 1d20=1 +100 failure
 ```
 
 Natural twenty auto-succeeds
 
-```python
->>> atk -100 >= ac15
+```cpp
+>>> atk -100 >= ac(15)
 1d20=20 -100 success
 ```
 
@@ -190,8 +188,8 @@ Natural twenty auto-succeeds
 
 Same as Armor Class
 
-```python
->>> dc15+2
+```cpp
+>>> dc(15)+2
 DC=17
 ```
 
@@ -199,8 +197,8 @@ DC=17
 
 Saving throws function the same as attack rolls, but just have a different identifier
 
-```python
->>> sav +4 +2 >= dc15
+```cpp
+>>> sav +4 +2 >= dc(15)
 1d20=12 +4 +2 ->18 success
 ```
 
@@ -208,28 +206,28 @@ Saving throws function the same as attack rolls, but just have a different ident
 
 Save rolls in variables using the `let` keyword
 
-```js
->>> let my_attack = roll [2d8 1d4]
->>> my_attack
+```rust
+>>> let divine_attack = roll [2d8, 1d4]
+>>> divine_attack
 2d8=[3, 7] ->10
->>> my_attack+4
+>>> divine_attack+4
 2d8=[3, 7] ->14
 ```
 
-If you want to save but not evaluate the roll, then just bind a set of dice to an identifier
+If you want to save, but not evaluate, the roll then just bind a set of dice to an identifier
 
 > For now, it's required to end the identifier name with a question mark to indicate it is probabilistic
 
-```js
->>> let my_attack? = [2d8+4 1d4]
->>> my_attack?
-2d8+4 1d4 pending
+```rust
+>>> let flame_strike? = [2d8+4, 1d4]
+>>> flame_strike?
+2d8+4 1d4
 ```
 
 Then, when you want to evaluate the roll
 
 ```python
->>> roll my_attack?
+>>> roll flame_strike?
 2d8=[5, 2] +4 1d4=6 ->17
 ```
 
@@ -245,4 +243,4 @@ The `rollang` interpreter will execute the file line by line.
 
 Only forward declarations are allowed.
 
-`myfile.roll`
+Save your file with a `.roll` extension, e.g. `myfile.roll`

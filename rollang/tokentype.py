@@ -11,6 +11,10 @@ class TokType(Enum):
     MINUS = "-"
     PLUS = "+"
     COMMA = ","
+    LPAREN = "("
+    RPAREN = ")"
+    LBRACKET = "["
+    RBRACKET = "]"
 
     # One or two character tokens
     EQUAL = "="
@@ -21,8 +25,6 @@ class TokType(Enum):
     LESS_EQUAL = "<="
     BANG = "!"
     BANG_EQUAL = "!="
-    LBRACKET = "["
-    RBRACKET = "]"
 
     # Literals
     IDENTIFIER = "IDENTIFIER"
@@ -31,8 +33,6 @@ class TokType(Enum):
     NUMBER = "NUMBER"
     STRING = "STRING"
     DICE = "DICE"
-    AC = "AC"
-    DC = "DC"
 
     # Keywords
     ROLL = "ROLL"
@@ -42,6 +42,8 @@ class TokType(Enum):
     SAV = "SAV"
     SEED = "SEED"
     LET = "LET"
+    AC = "AC"
+    DC = "DC"
 
     EOF = "EOF"
 
@@ -53,4 +55,6 @@ keywords = {
     "sav": TokType.SAV,
     "seed": TokType.SEED,
     "let": TokType.LET,
+    "ac": TokType.AC,
+    "dc": TokType.DC,
 }

@@ -52,6 +52,14 @@ class Scanner:
                 self.add_token(TokType.PLUS)
             case ",":
                 self.add_token(TokType.COMMA)
+            case "[":
+                self.add_token(TokType.LBRACKET)
+            case "]":
+                self.add_token(TokType.RBRACKET)
+            case "(":
+                self.add_token(TokType.LPAREN)
+            case ")":
+                self.add_token(TokType.RPAREN)
             # One or two character tokens
             case "=":
                 self.add_token(TokType.EQUAL_EQUAL if self.match("=") else TokType.EQUAL)
@@ -148,6 +156,8 @@ class Scanner:
     def dice(self) -> None:
         while self.peek().isdigit():
             self.advance()
+        # TODO: Handle space conflicts with succeeding characers
+        # TODO: Handle annotated dice, e.g. '1d20:"Fire"'
         self.add_token(TokType.DICE, self.source[self.start:self.current])
         return
 
