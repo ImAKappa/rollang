@@ -11,6 +11,7 @@ class TokType(Enum):
     MINUS = "-"
     PLUS = "+"
     COMMA = ","
+    COLON = ":"
     LPAREN = "("
     RPAREN = ")"
     LBRACKET = "["

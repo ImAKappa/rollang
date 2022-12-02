@@ -21,7 +21,7 @@ log.setLevel(logging.DEBUG)
 class ScannerError(Error):
     """Base-class for scanning errors"""
     def __init__(self, line: int, message: str):
-        super.__init__(message)
+        super().__init__(message)
         self.line = line
 
 class Scanner:
@@ -158,6 +158,8 @@ class Scanner:
             self.advance()
         # TODO: Handle space conflicts with succeeding characers
         # TODO: Handle annotated dice, e.g. '1d20:"Fire"'
+        if self.peek_next() == ":":
+            log.debug("Found a colon!")
         self.add_token(TokType.DICE, self.source[self.start:self.current])
         return
 

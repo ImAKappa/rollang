@@ -4,6 +4,11 @@ A DSL and interpreter for DnD rolls. Inspired by [Roll20 Macro Language](https:/
 
 > This is just for fun. For actual DnD games, nothing beats real dice :)
 
+
+<details><summary>Implementation Notes</summary>
+The interpreter is currently written in Python because that's what I know best at the moment. But I wanna switch to a compiled language soon, so realistically the final interpreter will probably be written in Nim. Although, I think a functional language might be a better fit, like OCaml or F#.
+</details>
+
 ---
 
 ## Dice
@@ -22,7 +27,7 @@ Multiple dice
 1d20 2d4
 ```
 
-Annotate dice
+Annotate dice (Current Scanner will throw an error, working on it)
 
 ```python
 >>> 2d4:"Fire attack"
