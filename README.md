@@ -11,6 +11,27 @@ The interpreter is currently written in Python because that's what I know best a
 
 ---
 
+## Interpreter
+
+```bash
+python .\rollang\rollang.py
+```
+
+To exit on Windows, press `Ctrl-z`.
+Alternatively, type `exit`.
+
+---
+
+## Source files
+
+The `rollang` interpreter will execute the file line by line.
+
+Only forward declarations are allowed.
+
+Save your file with a `.roll` extension, e.g. `myfile.roll`
+
+---
+
 ## Dice
 
 Single die
@@ -264,6 +285,8 @@ Then, when you want to evaluate the roll
 2d8=[5, 2] +4 1d4=6 ->17
 ```
 
+Also, variable names cannot start with a number, and must only contain letters and underscore (currently not enforced, but working on it)
+
 ---
 
 ## Comments
@@ -271,13 +294,3 @@ Then, when you want to evaluate the roll
 C-style comments: `//`
 
 Multiline comments are not supported, yet, though they will also use C-style `/* */`. However, you will be able to nest them.
-
----
-
-## Source files
-
-The `rollang` interpreter will execute the file line by line.
-
-Only forward declarations are allowed.
-
-Save your file with a `.roll` extension, e.g. `myfile.roll`

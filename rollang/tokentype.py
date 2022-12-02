@@ -16,6 +16,7 @@ class TokType(Enum):
     RPAREN = ")"
     LBRACKET = "["
     RBRACKET = "]"
+    QUESTION = "?"
 
     # One or two character tokens
     EQUAL = "="
@@ -45,6 +46,7 @@ class TokType(Enum):
     LET = "LET"
     AC = "AC"
     DC = "DC"
+    # END = "END"
 
     EOF = "EOF"
 

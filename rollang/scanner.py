@@ -52,6 +52,10 @@ class Scanner:
                 self.add_token(TokType.PLUS)
             case ",":
                 self.add_token(TokType.COMMA)
+            case ":":
+                self.add_token(TokType.COLON)
+            case "?":
+                self.add_token(TokType.QUESTION)
             case "[":
                 self.add_token(TokType.LBRACKET)
             case "]":
@@ -130,7 +134,7 @@ class Scanner:
             self.advance()
         
         if self.is_at_end():
-            raise Scanner(self.line, "Unterminated string.")
+            raise ScannerError(self.line, "Unterminated string.")
         
         # The closing ".
         self.advance()
@@ -157,9 +161,6 @@ class Scanner:
         while self.peek().isdigit():
             self.advance()
         # TODO: Handle space conflicts with succeeding characers
-        # TODO: Handle annotated dice, e.g. '1d20:"Fire"'
-        if self.peek_next() == ":":
-            log.debug("Found a colon!")
         self.add_token(TokType.DICE, self.source[self.start:self.current])
         return
 
