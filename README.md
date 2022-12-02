@@ -6,7 +6,7 @@ A DSL and interpreter for DnD rolls. Inspired by [Roll20 Macro Language](https:/
 
 
 <details><summary>Implementation Notes</summary>
-The interpreter is currently written in Python because that's what I know best at the moment. But I wanna switch to a compiled language soon, so realistically the final interpreter will probably be written in Nim. Although, I think a functional language might be a better fit, like OCaml or F#.
+The interpreter is currently written in Python because that's what I know best at the moment. But I wanna switch to a compiled language soon, so realistically the final interpreter will probably be written in Nim. Although, a functional language might be a better fit, like OCaml or F#.
 </details>
 
 ---
@@ -18,7 +18,7 @@ python .\rollang\rollang.py
 ```
 
 To exit on Windows, press `Ctrl-z`.
-Alternatively, type `exit`.
+Alternatively, type `exit` (doesn't work yet).
 
 ---
 
