@@ -276,7 +276,7 @@ If you want to save, but not evaluate, the roll then just bind a set of dice to 
 2d8+4 1d4
 ```
 
-> The goal is to have automatic type inference, but I dunno how to do that yet. It sounds scary and complicated, but we'll see. 
+> The goal is to have automatic type inference, but I dunno how to do that yet.
 
 Then, when you want to evaluate the roll
 
@@ -285,7 +285,7 @@ Then, when you want to evaluate the roll
 2d8=[5, 2] +4 1d4=6 ->17
 ```
 
-Also, variable names cannot start with a number, and must only contain letters and underscore (currently not enforced, but working on it)
+Also, variable names cannot start with a number, and must only contain letters, numbers, and underscore (currently not enforced, but working on it). They will also be case-sensitive.
 
 ---
 
