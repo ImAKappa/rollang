@@ -8,3 +8,6 @@
 
 // Annotated rolls
 1d20:"Deception check"
+
+// Attack rolls
+atk 3d8:"Non-Lethal Fireball"
