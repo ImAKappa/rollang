@@ -9,8 +9,8 @@ program:
 statement:
     | expr
     | "let" IDENTIFIER "=" expr
-    | expr modifier*                    -> 
-    | expr modifier* COMPARISON INT     -> RESULT
+    | expr modifier*
+    | expr modifier* COMPARISON INT
 
 expr:
     | dice|die

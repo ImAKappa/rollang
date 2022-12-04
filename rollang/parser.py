@@ -8,7 +8,10 @@ class ParserError(Error):
 
 class Parser:
 
-    def match_exp(self, tokens: list[Token]):
+    def match_statement(self):
+        return
+
+    def match_expr(self, tokens: list[Token]):
         match tokens:
             case [TokType.DICE]:
                 return TokType.DICE
