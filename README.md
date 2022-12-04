@@ -9,6 +9,14 @@ A DSL and interpreter for DnD rolls. Inspired by [Roll20 Macro Language](https:/
 The interpreter is currently written in Python because that's what I know best at the moment. But I wanna switch to a compiled language soon, so realistically the final interpreter will probably be written in Nim. Although, a functional language might be a better fit, like OCaml or F#.
 </details>
 
+## TODO
+
+- [X] Scanner
+- [ ] Parser
+- [ ] Interpreter
+- [ ] Byte-code interpreter???
+- [ ] Switch implementation language to one of Nim, OCaml, or F#
+
 ---
 
 ## Interpreter
@@ -48,7 +56,7 @@ Multiple dice
 1d20 2d4
 ```
 
-Annotate dice (Current Scanner will throw an error, working on it)
+Annotate dice
 
 ```python
 >>> 2d4:"Fire attack"
@@ -177,11 +185,6 @@ Disadvantage
 ```python
 >>> ac(15)
 AC=15
-```
-
-```python
->>> ac(15+2)
-AC=17
 ```
 
 ```python
