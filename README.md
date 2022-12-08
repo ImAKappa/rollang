@@ -17,6 +17,8 @@ The interpreter is currently written in Python because that's what I know best a
 - [ ] Byte-code interpreter???
 - [ ] Switch implementation language to one of Nim, OCaml, or F#
 
+Maybe everything should be a function?
+
 ---
 
 ## Interpreter
@@ -43,6 +45,16 @@ Save your file with a `.roll` extension, e.g. `myfile.roll`
 ## Dice
 
 Single die
+
+```python
+>>> d20
+1d20
+```
+
+```rust
+>>> repr d20
+Dice(dice=1d20, modifiers=[], annotation="") ->Result<PENDING>
+```
 
 ```python
 >>> 1d20
@@ -143,6 +155,27 @@ Comparison
 3d6=[2, 2, 2] ->6 success
 ```
 
+Left Multiplication
+
+```python
+>>> 2:"Dmg against vulnerability" * roll 3d6
+3d6=[2, 6, 1] *2:"Dmg against vulnerability" ->18
+```
+
+Highest
+
+```python
+>>> max roll 2d6
+2d6=[3, 5] max ->5
+```
+
+Lowest
+
+```python
+>>> min roll 3d4
+3d4=[2, 2, 3, 4] min ->2
+```
+
 ---
 
 ### **Operator Precedence**
@@ -184,7 +217,7 @@ Advantage
 Disadvantage
 
 ```python
->>> ddv [1d6, 2d4]
+>>> dis [1d6, 2d4]
 1d6=4 2d4=[2, 3] ->9 <<<
 1d6=5 2d4=[1, 4] ->10
 ```
@@ -285,6 +318,8 @@ If you want to save, but not evaluate, the roll then just bind a set of dice to 
 > For now, it's required to end the identifier name with a question mark to indicate it is probabilistic.
 >
 > This is analogous to how some languages use question marks to explicitly denote possible null types (TypeScript, Kotlin, etc.). However, in `rollang`, there is no such thing as a `null` type because variables cannot be `null`.
+>
+> I'm still considering a `Result` sum type, but one that uses `Result<EVAL, PENDING>` to denote the two states, evaluated rolls and pending rolls
 
 ```rust
 >>> let flame_strike? = [2d8+4, 1d4]
@@ -302,6 +337,20 @@ Then, when you want to evaluate the roll
 ```
 
 Also, variable names cannot start with a number, and must only contain letters, numbers, and underscore (currently not enforced, but working on it). They will also be case-sensitive.
+
+## Structs
+
+Should there be types? It would be convenient to organize rolls
+
+```f#
+type Dragon =
+    let fire_breath?: Dice = 4d8+4
+    let stomp?: Dice = 3d6+2
+
+>>> roll Dragon.fire_breath?
+
+>>> roll Dragon // rolls all actions
+```
 
 ---
 
