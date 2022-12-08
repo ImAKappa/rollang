@@ -158,6 +158,19 @@ Comparison
 
 ---
 
+## Initiative
+
+```python
+>>> roll init 3d20
+Initative
+---------
+1: 1d20=16
+2: 1d20=12
+3: 1d20=4
+```
+
+---
+
 ## Advantage/Disadvantage
 
 Advantage
