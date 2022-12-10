@@ -78,80 +78,82 @@ Array can only contain the same type
 
 ```rust
 repr 1d20
-// Rollable<Number(1), Sides(20), Roll<Pending>>
+// "Rollable<Amount(1), Sides(20), Modifier(0)>"
 ```
 
-**tostring**: converts value to string
+**tostring**: converts literal to string
 
 ```rust
 tostring 1d20
-/// "1d20"
+// "1d20"
+```
+
+**print**: prints string version of literal to standard IO
+
+```rust
+print 1d20
+// 1d20
+```
+
+You can specify the terminal character (default is newline, `"\n"`)
+
+```rust
+print (1d20 "")
+print (1d20)
+// ->18->7
 ```
 
 **roll**: rolls some dice (more generally a [Rollable]() or [Composite Rollable]()). For short, use `!r`
 
 ```rust
 roll 1d20
-// Roll<Result(7)>
+// ->7
+repr (roll 1d20)
+// "Roll<Result([7]), Sum(7)>"
 ```
 
 ```rust
 !r 2d8
-// Roll<Result([5, 1])>
-```
-
-**rollsum**: rolls some dice, then finds the sum of the results. For short, use `!rs`
-
-```rust
-!rs 2d8
-// RollSum<Result([3, 4]), Sum(7)>
+// [5, 1] ->6
+repr (!r 2d8)
+// "Roll<Result([5, 1]), Sum(6)>"
 ```
 
 **rollformat**: rolls some dice, then pretty prints the result. For short, use `!rf`
 
+> This is useful for printing logs, or printing the rolls to a file
+
 ```rust
 rollformat 1d20
-// "1d20=7"
+// 1d20=7
 !rf 2d6
-// "2d6=[5, 3] ->8"
+// 2d6=[5, 3] ->8
 ```
+
+Under the hood it basically calls 1) `print (1d20 "=")`, the 2) `print (roll 1d20)`
 
 ## Types
 
 ### Roll<T>
 
-Roll is like Option in other programming languages.
-
-Instead of None, it uses `Pending` to because the Roll might not have happened yet.
-It makes just as much sense to operate on potential rolls as realized rolls.
-
 ```F#
-type Roll<T> = (
-    Result of T,
-    Pending,
+type Roll = (
+    Result of Array<T>,
+    Sum,
 )
 ```
 
 ### Rollable
 
 ```F#
-type Rollable<T> = (
+type Rollable = (
     Amount of int,
     Sides of int,
-    Roll
+    Modifier of int,
 )
 ```
 
-### RollSum<T>
-
-```F#
-type RollSum<T> = (
-    Result of List<T>,
-    Pending,
-)
-```
-
-### Binding<T>
+<!-- ### Binding<T>
 
 ```F#
 type Binding<T> = (
@@ -165,7 +167,7 @@ type Binding<T> = (
 ```rust
 reflect 2d6
 // Binding<Name("2d6"), Value(2d6)>
-```
+``` -->
 
 ### Annotated<T>
 
@@ -178,8 +180,20 @@ type Annotated<T> = (
 
 ```rust
 repr 1d20:"Fire attack"
-// Annotated<Value(1d20), Note("Fire attack")>
+// Annotated<Value(Rollable<Amount(1), Sides(20), Modifier(0)>), Note("Fire attack")>
 ```
+
+## Bindings
+
+You can bind literals (die, number, string), to a name. This makes it easier to save and reuse results.
+
+```rust
+let my_binding = roll d20
+repr my_binding
+// 6
+```
+
+> Note that you can't reassign a binding. If you want to reuse the same name, you have to write `let name = roll d20` again. This will discard the previous value.
 
 ## Composing Functions
 
