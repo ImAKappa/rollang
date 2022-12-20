@@ -33,8 +33,8 @@ Basic operations:
 - addition (`+`)
 - subtraction (`-`)
 - multiplication (`*`)
-- floor division (`/`) because you usually round down
-  - There is the `ceildiv (a:number, b:number) -> (c: number)` function if you need it
+- floor division (`/`) because you usually round down in DnD
+  - There is the `ceildiv(a: number, b: number) -> (c: number)` function if you need it
 
 ### Dice `[number of dice]d[number of sides]`
 
@@ -57,10 +57,10 @@ You are free to use whatever numbers you want, even if they are not strictly leg
 
 Strings of text are surrounded by `""`. There is no distinction between characters and strings.
 
-You can annotate dice with strings using the **annotation operator** `:`
+You can annotate dice with strings using the **bind operator** `::`
 
 ```rust
-1d20:"Investigation check"
+1d20::"Investigation check"
 ```
 
 ### Array<T>
@@ -78,29 +78,29 @@ Array can only contain the same type
 
 ```rust
 repr 1d20
-// "Rollable<Amount(1), Sides(20), Modifier(0)>"
+// "Entity(0)<Rollable, Amount(1), Sides(20)>"
 ```
 
 **tostring**: converts literal to string
 
 ```rust
 tostring 1d20
-// "1d20"
+// "d20"
 ```
 
 **print**: prints string version of literal to standard IO
 
 ```rust
 print 1d20
-// 1d20
+// d20
 ```
 
 You can specify the terminal character (default is newline, `"\n"`)
 
 ```rust
-print (1d20 "")
+print (1d20, "")
 print (1d20)
-// ->18->7
+// d20d20
 ```
 
 **roll**: rolls some dice (more generally a [Rollable]() or [Composite Rollable]()). For short, use `!r`
@@ -134,48 +134,27 @@ Under the hood it basically calls 1) `print (1d20 "=")`, the 2) `print (roll 1d2
 
 ## Types
 
-### Roll<T>
+### Entity
 
-```F#
-type Roll = (
-    Result of Array<T>,
-    Sum,
-)
-```
-
-### Rollable
-
-```F#
-type Rollable = (
-    Amount of int,
-    Sides of int,
-    Modifier of int,
-)
-```
-
-<!-- ### Binding<T>
-
-```F#
-type Binding<T> = (
-    Name of string,
-    Value of T,
-)
-```
-
-`reflect` wraps data in a Binding type
+A number, like an identification number
 
 ```rust
-reflect 2d6
-// Binding<Name("2d6"), Value(2d6)>
-``` -->
+Entity :: number
+```
 
-### Annotated<T>
+### Result
 
-```F#
-type Annotated<T> = (
-    Value of T,
-    Note of string,
-)
+```rust
+Result<T> :: Pending | T
+```
+
+### Roll<T>
+
+```ts
+Roll :: 
+    Result<number[]>,
+    Sum: number,
+}
 ```
 
 ```rust
