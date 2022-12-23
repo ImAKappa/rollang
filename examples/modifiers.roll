@@ -1,0 +1,14 @@
+Poison :: mod(d: Roll<Pending>) {
+    result = result - (roll d)
+}
+
+roll d20:Poison(d4)
+
+
+// Advantage
+advantage :: mod() {
+    second_roll := roll d20
+    result = max(result, second_roll)
+}
+
+roll d20:advantage

@@ -1,6 +1,6 @@
 # rollang
 
-> This is the specification of the language for developers
+> This is the specification of the language
 
 > For DnD rules see the [DnD Beyond Introduction](https://www.dndbeyond.com/sources/basic-rules/introduction)
 
@@ -12,6 +12,14 @@
 
 The language is implemented by the `rollang` interpreter. There is a REPL, and alternatively you can write code in a `.roll` script files.
 
+The language makes it easy to:
+
+* modify rolls,
+* construct groups of rolls,
+
+The interpreter is designed to do all the bookkeeping for you.
+
+
 ---
 
 ## Comments
@@ -22,7 +30,7 @@ Multiline comments `/* */` (nestable!)
 
 ---
 
-## Literals
+## Literals & Primitive Types
 
 ### Number
 
@@ -36,41 +44,100 @@ Basic operations:
 - floor division (`/`) because you usually round down in DnD
   - There is the `ceildiv(a: number, b: number) -> (c: number)` function if you need it
 
-### Dice `[number of dice]d[number of sides]`
+A `number` can be any value from $-2^{64-1}$ to $2^{64-1}$
 
-If `[number of dice]`=1, it may be omitted
+### Bool
 
-```ts
-1d20
-// equivalent
-d20
-```
-
-You are free to use whatever numbers you want, even if they are not strictly legal
+Same behaviour as other languages, different labels. "Pass" and "fail" are more often used in DnD parlance.
 
 ```ts
-69d420
-// 69 rolls of a 420-sided die. Nice.
+pass // true
+fail // false
 ```
 
 ### String
 
 Strings of text are surrounded by `""`. There is no distinction between characters and strings.
 
-You can annotate dice with strings using the **bind operator** `::`
-
 ```rust
-1d20::"Investigation check"
+"Investigation check" // string
+
+len("Hello") // 5
 ```
 
-### Array<T>
+### Arrays: [T]
 
-Array can only contain the same type
+Array is a container that can only contain the same type
 
 ```ts
-[1d20, 2d4]
-// Array of Rollable
+[1, 12, -4] // [number]
+
+["Hello", "World"] // [string]
+
+len([0, -3, 7]) // 3
 ```
+
+### Result\<T\>
+
+Result in `rollang` is like Option (Rust) or Maybe (Haskell) or Result (Swift). But instead of None, it handles Pending rolls.
+
+```rust
+Result<Pending>
+Result<3>
+Result<"Hello">
+Result<[1, 2, 3]>
+```
+
+## Pieces
+
+Instead of a sophisticated, generic, and extensible type system (I'm not smart or experienced enough in lang design to pull that off), `rollang` uses a simple Entity Component System to handle more complex data.
+
+> Because the word `comp` is reserved for `Composite Roll`s, I will use Pieces instead of "Components". But in this context they mean the same thing.
+
+```rust
+Roll :: pcs {
+    Result<[number]>,  // No need to write Result: Result
+    Sum(Result<number>)
+}
+// "A Roll is made of the pieces: possible number array called Result, possible number called Sum"
+```
+
+```rust
+Rollable :: pcs {
+    Amount(number),
+    Sides(number),
+    Roll, // No need to write Roll: Roll
+}
+```
+
+`Rollable` is essentially the definition for the most important thing in `rollang`: dice!
+
+## Dice
+
+For convenience, and consistency with DnD 5e, you can manipulate `Rollable`s with the syntax `[amount]d[sides]`
+
+```ts
+1d20
+// if [amount]=1, then you can omit it 
+d20
+/* Rollable
+ *      Amount(1)
+ *      Sides(20)
+ *      Roll(Result<Pending>, Sum<Pending>)
+ */
+```
+
+To roll a dice, use the built-in procedure `roll`:
+
+```ts
+roll 3d8
+/* Rollable
+ *      Amount(3)
+ *      Sides(8)
+ *      Roll(Result<[6, 2, 3]>, Sum(11))
+ */
+```
+
 
 ## Built-in Functions
 
@@ -119,42 +186,36 @@ repr (!r 2d8)
 // "Roll<Result([5, 1]), Sum(6)>"
 ```
 
-**rollformat**: rolls some dice, then pretty prints the result. For short, use `!rf`
+**rolli**: rolls dice and displays more information about the roll. For short, use `!ri`
 
 > This is useful for printing logs, or printing the rolls to a file
 
 ```rust
-rollformat 1d20
+rolli 1d20
 // 1d20=7
-!rf 2d6
+!ri 2d6
 // 2d6=[5, 3] ->8
 ```
 
 Under the hood it basically calls 1) `print (1d20 "=")`, the 2) `print (roll 1d20)`
 
-## Types
+## Queries instead of Types
 
-### Entity
+Everything in `rollang` has a collection of components
 
-A number, like an identification number
-
-```rust
-Entity :: number
+```nim
+Result<T> :: query{Pending, T}
 ```
 
-### Result
-
-```rust
-Result<T> :: Pending | T
-```
 
 ### Roll<T>
 
 ```ts
-Roll :: 
+Roll :: query{
     Result<number[]>,
     Sum: number,
 }
+
 ```
 
 ```rust
@@ -166,53 +227,48 @@ repr 1d20:"Fire attack"
 
 You can bind literals (die, number, string), to a name. This makes it easier to save and reuse results.
 
-```rust
-let my_binding = roll d20
+```go
+my_binding := roll d20
 repr my_binding
-// 6
+// ->6
 ```
 
-> Note that you can't reassign a binding. If you want to reuse the same name, you have to write `let name = roll d20` again. This will discard the previous value.
-
-## Composing Functions
+## Functions
 
 
-```rust
-let binding = reflect 1d20
-// binding = Binding<Name("1d20"), Value(1d20)>
-let name = Name(binding)
-// name = "1d20"
-let val = Value(binding)
-// 
-let result = unwrap (roll val)
+```nim
+addnums :: fn(a: number, b: number) -> (c: number) {
+    c = a + b
+    return c
+}
 ```
 
-1. Pretty prints the reflected name followed by the 
-```
+## Composite Rolls
 
+Often times, you need to roll multiple values at once, or group multiple different rolls.
 
+For example, rolling abilities:
 
-This also makes it easy to construct Composite Rollables that mix pending rolls and roll results
-
-## Composite Rollable
-
-```rust
-let Dragon = (
-    let stats = roll abilities,
-    let fire_breath = 3d4+4,
-    let stomp = 2d8+4,
-)
+```go
+Abilities :: comp {
+    STR: 4d6:max,
+    DEX: 4d6:max,
+    CON: 4d6:max,
+    INT: 4d6:max,
+    WIS: 4d6:max,
+    CHA: 4d6:max,
+}
 ```
 
 Note that `roll abilities` creates a composite roll
 
 ```ts
-abilities
+Abilities
 // Roll<Pending>
 ```
 
 ```ts
-roll abilities
+roll Abilities
 
 ```
 
@@ -225,62 +281,6 @@ repr abilities
 // "abilities: Roll<Pending> = (let STR = max 4d6, let DEX = max 4d6, let CON = max 4d6, let INT = max 4d6, let WIS = max 4d6, let CHA = max 4d6,)"
 ```
 
-
-
-```rust
-let Dragon = (
-    let stats = (let INT = 18, let STR = 27),
-    let fire_breath = 3d4+4,
-    let stomp = 2d8+4,
-)
-```
-
-Composite template?
-
-```rust
-template Stats = (
-    let STR: int,
-    let DEX: int,
-    let CON: int,
-    let INT: int,
-    let WIS: int,
-    let CHA: int,
-)
-```
-
-Every Composite Roll is, obviously, automatically usable with `roll`
-
-```rust
-roll Dragon
-```
-
-will roll every single `Rollable` type scoped to Dragon
-
-If you just want to roll a particular `Rollable`
-
-Accessing inner scope in a composition
-
-```rust
-Dragon::stats::INT
-```
-
-```rust
-Dragon stats int
-```
-
-```rust
-Dragon firebreath str
-```
-
-Composite Roll template
-
-```rust
-template Dragon = (
-    let stats: Stats,
-    let fire_breath: Rollable,
-    let stomp: Rollable,
-)
-```
 
 
 Annotate dice with a string of text

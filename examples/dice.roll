@@ -10,4 +10,7 @@
 1d20:"Deception check"
 
 // Attack rolls
-atk 3d8:"Non-Lethal Fireball"
+roll atk+4
+
+// Damage calculation
+roll 3d8:"Non-Lethal Fireball"

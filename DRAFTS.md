@@ -5,129 +5,84 @@ there are different kinds of rolls:
 
 ## Group Checks
 
-```F#
-let groupcheck = roll 3d20
+You could roll multiple d20s in one command.
+
+```
+groupcheck := 3d20
 ```
 
 But what if you want to apply individual modifiers to each roll?
 
 ```go
 groupcheck := (
-    uthal= d20+2,
-    mycin= d20+4,
-    gold= d20+3:adv,
+    uthal := d20+2,
+    mycin := d20+4,
+    gold := d20+3:adv,
 )
 ```
 
-Access rolls
+In this case, uthal's, mycin's, and gold's rolls are scoped to `groupcheck`.
 
 ```F#
 groupcheck.mycin
 ```
 
-## Extending Behaviour
+## Extending Behaviour of Rolls
 
 
 `rollang` is essentially a framework for modifying a single function, `roll`.
 
-* The general **input** is some rollable entity with an arbitrary set of components. `Entity(number)<Rollable, ...>`
-* The `roll` function is updated to combine all the defined components.
-* The **output** is a list of numbers and the sum of that list: `Roll<Result(number[]), Sum(number)>`.
+1. The general **input** is a set of `Rollable` entities. You bind Modifiers to each input
+2. The Modifiers are functions that modify the result of the roll. You chain together modifiers to acheive different roll affects
+2. The **output** is a list of numbers and the sum of that list: `Roll<Result(number[]), Sum(number)>`
 
 
+## Example
 
+Let's say you want to modify rolls with some kind of random `Poison` debuff.
 
-Users should be able to create:
+You would create a `Poison` modifier like this:
 
-1) Custom Components to add data to rolls
-
-* Components with values
-
-```ts
-// Just bind values normally
-Poison :: Rollable
+```nim
+Poison :: mod(d: Roll<Pending>) {
+    result = result - (roll d)
+}
 ```
 
-* Flag components
+With explanations
 
-```ts
-flag 
+```nim
+# `Poison` is the identifier
+# `mod` means `modifier`
+# A mod can accept a paraemeter that fullfuills a `Query`
+Poison :: mod(d: Roll<Pending>) {
+    # Every modifier implicitly has `result: [int]` parameter
+    # Similarly, a modifier will implicitly return `result: [int]`
+    result = result - (roll d)
+    # You can't recursively use mods
+    #   So no `result = result - (roll d:Poison(d4))
+}
 ```
 
-2. Update the `roll` function with custom handlers. Users should be able to:
+And use it like this:
 
-* reorganize the sequence of handlers
-* combine results of different handlers
-
-as long as the final result is a **list of numbers**
-
-There are a two kinds of handlers:
-
-1. **Within-Entity Handler**: These handlers modify the value of rolls within entities
-2. **Cross-Entity Handler**: These handlers perform some operation on the rolls of multiple different entities
-
-
-
-```ts
-// Example: A system for rolling entities with the "poisoned" component
-system poison(entity) with (Poison) =
-    entity + Poison.dmg
-```
-
-```F#
-let player = (
-    let health = 20,
-    let dmg = 2d6+4 
-)
-
-
-roll player:Poison(dmg: )
+```nim
+roll 1d20:Poison(d4)
 ```
 
 ---
 
-Implementing advantage
+Another example, this time we implement advantage:
 
-Define a component
-
-```rust
-comp adv
-```
-
-```rust
-with (adv) {
-    max(roll entity, roll entity)
+```nim
+adv :: mod() {
+    second_roll := (roll d20)
+    result = max (result, second_roll)
 }
 ```
-
-Users need a way to hook into the result of a roll
 
 ```ts
 roll d20:adv
 ```
 
-Since the program focuses on rolling, any component should modify the result
-
-Maybe we can treat it like Python, where the "self" object is used in the method declaration
-
-
-
-```ts
-system roll(entities: Rollable) -> (result := 0) {
-    
-}
-```
-
-```ts
->>> debug roll
-System
-```
-
-```
-update(roll)
-
-```ts
-update(roll) with (adv: Component) -> (result := 0) {
-    roll
-}
-```
+Basically, the idea is the user of `rollang` decides how to manipulate the results of a roll, while the interpreter does the bookkeeping for you.
