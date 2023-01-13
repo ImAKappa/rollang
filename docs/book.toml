@@ -1,0 +1,6 @@
+[book]
+authors = ["ImAKappa"]
+language = "en"
+multilingual = false
+src = "src"
+title = "rollang"

@@ -1,4 +1,17 @@
-# rollang Implementation
+# Implementation
+
+# Architecture
+
+> Architecture for `rollang` interpreter
+>
+> 1. Lexer (string -> token) 
+> 
+> 2. Token Parser (token -> AST) 
+>
+> 3. AST Parser (AST -> ECS)
+>
+> 3. ECS Interpreter (run ECS)
+
 
 
 Use an ECS-like framework to manage rolls

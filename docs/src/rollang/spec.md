@@ -1,3 +1,5 @@
+# rollang Spec
+
 # rollang
 
 > This is the specification of the language
@@ -42,7 +44,7 @@ Basic operations:
 - subtraction (`-`)
 - multiplication (`*`)
 - floor division (`/`) because you usually round down in DnD
-  - There is the `ceildiv(a: number, b: number) -> (c: number)` function if you need it
+  - There is the `ceildiv` function if you need it
 
 A `number` can be any value from $-2^{64-1}$ to $2^{64-1}$
 
@@ -77,7 +79,7 @@ Array is a container that can only contain the same type
 len([0, -3, 7]) // 3
 ```
 
-### Result\<T\>
+### Result\<T | Pending\>
 
 Result in `rollang` is like Option (Rust) or Maybe (Haskell) or Result (Swift). But instead of None, it handles Pending rolls.
 
@@ -90,7 +92,7 @@ Result<[1, 2, 3]>
 
 ## Pieces
 
-Instead of a sophisticated, generic, and extensible type system (I'm not smart or experienced enough in lang design to pull that off), `rollang` uses a simple Entity Component System to handle more complex data.
+Instead of a sophisticated, generic, and extensible type system (I'm not smart or experienced enough in language design to pull that off), `rollang` uses a simple Entity Component System to handle more complex data manipulations.
 
 > Because the word `comp` is reserved for `Composite Roll`s, I will use Pieces instead of "Components". But in this context they mean the same thing.
 
@@ -123,7 +125,7 @@ d20
 /* Rollable
  *      Amount(1)
  *      Sides(20)
- *      Roll(Result<Pending>, Sum<Pending>)
+ *      Roll<Pending>
  */
 ```
 
@@ -131,11 +133,7 @@ To roll a dice, use the built-in procedure `roll`:
 
 ```ts
 roll 3d8
-/* Rollable
- *      Amount(3)
- *      Sides(8)
- *      Roll(Result<[6, 2, 3]>, Sum(11))
- */
+// Roll: Result([6, 2, 3]), Sum(11)
 ```
 
 
@@ -145,7 +143,7 @@ roll 3d8
 
 ```rust
 repr 1d20
-// "Entity(0)<Rollable, Amount(1), Sides(20)>"
+// Rollable: Amount(1), Sides(20), Roll<Pending>
 ```
 
 **tostring**: converts literal to string
@@ -176,52 +174,28 @@ print (1d20)
 roll 1d20
 // ->7
 repr (roll 1d20)
-// "Roll<Result([7]), Sum(7)>"
+// "Roll: Result([7]), Sum(7)"
 ```
 
 ```rust
 !r 2d8
 // [5, 1] ->6
 repr (!r 2d8)
-// "Roll<Result([5, 1]), Sum(6)>"
+// "Roll: Result([5, 1]), Sum(6)"
 ```
 
-**rolli**: rolls dice and displays more information about the roll. For short, use `!ri`
+**rollf**: rolls dice and formats the information about the roll. For short, use `!rf`
 
 > This is useful for printing logs, or printing the rolls to a file
 
 ```rust
-rolli 1d20
+rollf 1d20
 // 1d20=7
-!ri 2d6
+!rf 2d6
 // 2d6=[5, 3] ->8
 ```
 
 Under the hood it basically calls 1) `print (1d20 "=")`, the 2) `print (roll 1d20)`
-
-## Queries instead of Types
-
-Everything in `rollang` has a collection of components
-
-```nim
-Result<T> :: query{Pending, T}
-```
-
-
-### Roll<T>
-
-```ts
-Roll :: query{
-    Result<number[]>,
-    Sum: number,
-}
-
-```
-
-```rust
-repr 1d20:"Fire attack"
-// Annotated<Value(Rollable<Amount(1), Sides(20), Modifier(0)>), Note("Fire attack")>
-```
 
 ## Bindings
 
@@ -231,6 +205,20 @@ You can bind literals (die, number, string), to a name. This makes it easier to 
 my_binding := roll d20
 repr my_binding
 // ->6
+```
+
+## Snapping Pieces Together
+
+Snap different pieces together with the `:` (bind) operator
+
+```rust
+repr 1d20:"Fire attack"
+// Rollable: Amount(1), Sides(20), Roll<Pending>, Note("Fire attack")
+```
+
+```rust
+repr d20:+4
+// Rollable: Amount(1), Sides(20), Modifier(+4), Roll<Pending>
 ```
 
 ## Functions
@@ -264,7 +252,12 @@ Note that `roll abilities` creates a composite roll
 
 ```ts
 Abilities
-// Roll<Pending>
+/* CompositeRoll: [
+    STR: Rollable(Amount(4), Sides(6), Roll<Pending>),
+    ...
+    CHA: Rollable(Amount(4), Sides(6), Roll<Pending>),
+]
+*/
 ```
 
 ```ts
@@ -648,5 +641,6 @@ Ability scores are an example of composition. When you run `roll abilities`, rea
 ---
 
 ## Source files
+
 
 

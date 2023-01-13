@@ -1,3 +1,5 @@
+# Draft Ideas
+
 # Drafts
 
 According to the [Basic Rules: Using Ability Scores](https://www.dndbeyond.com/sources/basic-rules/using-ability-scores),
@@ -86,3 +88,6 @@ roll d20:adv
 ```
 
 Basically, the idea is the user of `rollang` decides how to manipulate the results of a roll, while the interpreter does the bookkeeping for you.
+
+
+[Micro features of Programming languages](https://buttondown.email/hillelwayne/archive/microfeatures-id-like-to-see-in-more-languages/)
