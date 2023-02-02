@@ -5,7 +5,7 @@
 Result in `rollang` is a sum type with two variants, `Ok` or `Pend`
 
 ```rust
-f := |x: num|: Result -> 2d4 +x
+f := |x: Result<num>| -> x +4
 ```
 
 > Maybe (Haskell) or Result (Swift). But instead of None, it handles Pending rolls.

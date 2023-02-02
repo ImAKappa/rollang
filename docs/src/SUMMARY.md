@@ -26,3 +26,6 @@
   - [Lexer](./rollang/arch/lexer.md)
   - [Parsing](./rollang/arch/parsing.md)
   - [VM](./rollang/arch/vm.md)
+
+
+- [PL Design](./rollang/lang/design.md)
