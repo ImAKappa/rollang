@@ -59,7 +59,7 @@ Whitespace separates tokens, although the amount of whitespace beyond one is ins
 | `else` | Control flow |
 | `for` | Control flow (loops) |
 
-### 2.2.2 Identifiers
+### 2.2.2 Valid identifiers
 
 `kebab-case` is recommended due to legibility.
 
@@ -74,27 +74,6 @@ Valid characters:
 - `-`
 - `_`
 - `0-9`
-
-Data can be bound to identifiers using the **declaration operator** `:=`
-
-```go
->>> investigation-check := roll d20
->>> investigation-check
-6
-```
-
-A pair of data and identifier is called a **binding**, like in other languages.
-
-Bindings can be updated using the **assignmet operator**
-
-```go
->>> dex-check := roll d20
->>> dex-check
-6
->>> dex-check = roll d20
->>> dex-check
-14
-```
 
 ## 2.3 Literals
 
@@ -212,47 +191,95 @@ Compound literals are treated as a single type, therefore they can be collected 
 [2d4:"Fire attack", 2d8:"Lightning"]
 ```
 
-## 3 Control Flow
+## Built-in Functions
 
-### 3.1 Loops
-
-```python
-for([2d8, 3d6]) dice, i:
-    print(i, roll dice)
-```
-
-Infinite loop
+**repr**: prints type and values, similar to Python `repr()`. Useful for developers
 
 ```rust
-health := 10
-
-loop:
-    if health < 0:
-        break
-    health -= 1
+repr 1d20
+// Rollable: Amount(1), Sides(20), Roll<Pending>
 ```
 
-### 3.2 If/Else and Boolean Logic
+**tostring**: converts literal to string
 
-Instead of true and false, DnD uses `pass` (true) and `fail` (false)
+```rust
+tostring 1d20
+// "d20"
+```
 
-```ts
-if pass:
+**print**: prints string version of literal to standard IO
 
-elif fail:
+```rust
+print 1d20
+// d20
+```
 
-else:
+You can specify the terminal character (default is newline, `"\n"`)
 
+```rust
+print (1d20, "")
+print (1d20)
+// d20d20
+```
+
+**roll**: rolls some dice (more generally a [Rollable]() or [Composite Rollable]()). For short, use `!r`
+
+```rust
+roll 1d20
+// ->7
+repr (roll 1d20)
+// "Roll: Result([7]), Sum(7)"
+```
+
+```rust
+!r 2d8
+// [5, 1] ->6
+repr (!r 2d8)
+// "Roll: Result([5, 1]), Sum(6)"
+```
+
+**rollf**: rolls dice and formats the information about the roll. For short, use `!rf`
+
+> This is useful for printing logs, or printing the rolls to a file
+
+```rust
+rollf 1d20
+// 1d20=7
+!rf 2d6
+// 2d6=[5, 3] ->8
+```
+
+Under the hood it basically calls 1) `print (1d20 "=")`, the 2) `print (roll 1d20)`
+
+## Bindings
+
+You can bind literals (die, number, string), to a name. This makes it easier to save and reuse results.
+
+```go
+my_binding := roll d20
+repr my_binding
+// ->6
+```
+
+## Snapping Pieces Together
+
+Snap different pieces together with the `:` (bind) operator
+
+```rust
+repr 1d20:"Fire attack"
+// Rollable: Amount(1), Sides(20), Roll<Pending>, Note("Fire attack")
+```
+
+```rust
+repr d20:+4
+// Rollable: Amount(1), Sides(20), Modifier(+4), Roll<Pending>
 ```
 
 ## Functions
 
-```ts
-fire-atk :: fn(dmg: num) -> dmg + 2d6
-```
 
 ```nim
-addnums :: fn(a: num, b: num) -> (c: num) {
+addnums :: fn(a: number, b: number) -> (c: number) {
     c = a + b
     return c
 }

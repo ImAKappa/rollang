@@ -1,8 +1,18 @@
 # Architecture
 
-# Implementation
 
-# Architecture
+## Usage
+
+The language is implemented by the `rollang` interpreter. There is a REPL, and alternatively you can write code in a `.roll` script files.
+
+The language makes it easy to:
+
+* modify rolls,
+* construct groups of rolls,
+
+The interpreter is designed to do all the bookkeeping for you.
+
+# Implementation
 
 > Architecture for `rollang` interpreter
 >
