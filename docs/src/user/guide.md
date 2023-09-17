@@ -4,6 +4,9 @@
 
 > For DnD rules see the [DnD Beyond Introduction](https://www.dndbeyond.com/sources/basic-rules/introduction)
 
+
+## Command-Line Iterface
+
 Start the rollang interpreter by typing `rollang` into a shell (like `Command Prompt`/`PowerShell` on Windows, `Bash` on Linux, or `Terminal` on Mac OS). This is the start of a `rollang` **session**
 
 ```bash
@@ -15,6 +18,12 @@ A `>>>` will show up. This is the prompt of the `rollang` interpreter.
 ```python
 Rollang v0.1 12th Jan 2023
 >>>
+```
+
+If you want to record a session, you can use
+
+```bash
+rollang --log PATH/TO/LOGFILE.txt
 ```
 
 ## Dice
@@ -33,23 +42,30 @@ If the number of dice is `1`, you can omit it
 1d20
 ```
 
-Create a collection of dice, called a **roll list**
+Create a collection of dice, called a **Rollset**
 
-```python
->>> [1d20, 2d4]
-1d20 2d4
+```lua
+>>> {1d20, 2d4}
+{1d20, 2d4}
 ```
 
 Annotate dice with a string of text
 
-```python
->>> 2d4:"Fire attack"
-2d4:"Fire attack"
+```lua
+>>> 2d4[Fire Ball]
+2d4 Fire Ball
 ```
 
-```python
->>> [2d4:"Fire attack", 2d8:"Lightning"]
-2d4:"Fire attack" 2d8:"Lightning"
+```lua
+>>> {2d4[Fire Ball], 2d8[Lightning Strike]}
+{2d4 Fire Ball, 2d8 Lightning Strike}
+```
+
+Rollsets can be annotated too
+
+```lua
+>>> {2d4[Fire Ball], 2d8[Lightning Strike]}[Combo]
+{2d4 Fire Ball, 2d8 Lightning Strike} Combo
 ```
 
 ## Rolling
@@ -58,38 +74,45 @@ You can roll dice using the `roll` command
 
 Single die
 
-```python
+```lua
 >>> roll 1d20
-1d20 =7
+7 <- 1d20
 ```
 
-```python
->>> roll 1d20:"Fire"
-1d20:"Fire" =7
+```lua
+>>> roll 1d20[Fire]
+7 <- 1d20
 ```
 
 Multiple separate dice rolls
 
-```python
+```lua
 >>> roll (3d4 2d6)
-3d4 =[2, 2, 3] ->7
-2d6 =[4, 1] ->5
+7 <- 3d4=[2, 2, 3]
+5 <- 2d6=[4, 1]
 ```
 
-Alternatively, you can provide a roll list
+Alternatively, you can combine rolls by using a Rollset
 
-```python
->>> roll [3d4, 2d6]
-3d4 =[2, 2, 3] 2d6 =[4, 1] ->12
+```lua
+>>> roll {3d4, 2d6}[Combo]
+12 Combo <- 3d4=[2, 2, 3] 2d6=[4, 1]
 ```
 
-The result, specifically sum, of the roll is shown after the `->`. In the example above, the result is `12` because `2 + 2 + 3 + 4 + 1 = 12`
+Which also means you can roll multiple Rollsets
 
-> Instead of typing `roll` over and over, you can use the short-form `r!` like
+```lua
+>> roll ({3d4, 2d6} {4d6, 2d10})
+12 <-  3d4=[2, 2, 3]     2d6=[4, 1]
+23 <-  4d6=[4, 2, 5, 1]  2d10=[8, 3]
+```
+
+
+> Instead of typing `roll` over and over, you can use the _bang_-command `r!` like
 >
 > ```bash
 > >>> r! d20
-> d20 =17
+> 17 <- d20
 > ```
 
 ## Seed
@@ -98,34 +121,35 @@ Rolls are random, but at the beginning of a session, `.roll` file (see below), o
 
 ```python
 >>> seed 1234
-seed =1234
-```
-
-or 
-
-```bash
-rollang --seed 1234
 ```
 
 ## Advantage/Disadvantage
 
 > See [Basic Rules#AdvantageDisadvantage](https://www.dndbeyond.com/sources/basic-rules/using-ability-scores#AdvantageandDisadvantage)
 
-Advantage
+Roll with Advantage
 
-```python
->>> r! d20:adv
-1d20 =7
-1d20 =16 <!-
+```lua
+>>> r!adv d20
+7    <- 1d20
+[16] <- 1d20
 ```
 
-Disadvantage
+Roll with Disadvantage
 
 ```python
->>> r! d20:dis
-1d20 =7 <!-
-1d20 =16
+>>> r!ddv d20
+[7] <- 1d20 
+16  <- 1d20
 ```
+
+> Note: This is nearly equivalent to
+>
+> ```bash
+> >>> r! max(2 * d20)
+> ```
+>
+> Except the `radv` command will return both roll results, and format the output
 
 ## Modifiers
 
@@ -133,37 +157,67 @@ You can append a modifier, some positive or negative number, to dice.
 
 ```python
 >>> r! 1d20+4
-1d20 =6 +4 ->10
+14 <- 2d10=[6, 4] +4
 ```
 
-If you want to include spaces between the dice and the modifier, you need to use parentheses
+Don't include spaces by accident
 
 ```python
->>> r! (1d20 +4)
-1d20 =6 +4 ->10
+>>> r! 2d20 +4
+Error
 ```
 
 ```python
->>> r! (1d20:"Fire" -4:"Debuff")
-1d20:"Fire" =6 -4:"Debuff" ->2
-```
-
-In `rollang`, modifiers extend beyond numbers and can be functions.
-
-```python
->>> r! 3d6:max
-3d6 =[3, 6, 2] max ->6
-```
-
-Another example is `sum`. This is implicitly called as the last modifier only if a die
-has no other named modifiers
-
-```python
->>> r! 3d6:sum
-3d6 =[3, 6, 2] sum ->11
+>>> r! 1d20[Ability Check]-4[Debuff]
+2 <- 1d20[Ability Check]=6 -4[Debuf]
 ```
 
 > See [Custom Modifiers]() section below to see how to define your own modifiers
+
+## Roll macro
+
+Specify the kind of roll
+
+### Reroll
+
+```lua
+>>> r!rr(< 2) d20 // Rerolls any result less than 2
+```
+
+### Drop Highest
+
+```lua
+>>> r!dh(> 2) // Drops any result higher than 2
+```
+
+### Drop Lowest
+
+```lua
+>>> r!dl(< 2) // Drops any result higher than 2
+```
+
+### Adv & Ddv
+
+```lua
+>>> r!adv d20
+>>> r!ddv d20
+```
+
+### Exploding Dice
+
+```js
+>>> r!xplode(> 16) d20 // Rerolls and adds sum if greater than 16
+```
+
+### DC & AC
+
+```js
+>>> r!sav(> 16) d20+4
+```
+
+```js
+>>> r!atk(< 17) d20+4
+```
 
 ## Bindings
 
@@ -172,7 +226,7 @@ You can bind values, like a dice, number, or result, to a name. This makes it ea
 ```rust
 >>> my_binding := roll d20
 >>> my_binding
-7 
+7
 ```
 
 > ❗Note that you can't reassign a binding. If you want to reuse the same name, you have to write `name := roll d20` again. This will discard the previous value of `name`
@@ -184,7 +238,7 @@ You can bind values, like a dice, number, or result, to a name. This makes it ea
 `ability_scores` is a default binding that generates ability scores according to the instructions in the [Basic Rules#DetermineAbilityScores](https://www.dndbeyond.com/sources/basic-rules/step-by-step-characters#3DetermineAbilityScores) on DnDBeyond
 
 ```python
->>> roll ability_scores
+>>> roll dnd.ability_scores
 STR =15
 DEX =14
 CON =11
@@ -336,6 +390,23 @@ Like attack rolls, `sav` is an alias for a d20
 
 ---
 
+
+## Functions
+
+Some built-in functions in `rollang` are shown below. For a full list, see the specification docs.
+
+```python
+>>> r! max(3d6)
+3d6 =[3, 6, 2] max ->6
+```
+
+Another example is `sum`. This is implicitly called using the roll (`roll`, `r!`) method
+
+```python
+>>> sum(1, 2, 3)
+6
+```
+
 ## Composite Roll
 
 Group rolls together into a `Composite Roll`
@@ -393,6 +464,6 @@ r! d20 > 15ac
 
 ## Comments
 
-C-style comments: `//`
+Comments: `//`
 
-C-style multiline comments `/* */`. They are nestable!
+Multiline comments `/* */`. They are nestable!
