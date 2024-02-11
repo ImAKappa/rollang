@@ -2,30 +2,30 @@
 
 # rollang
 
-- [Releases](./rollang/releases.md)
-- [Roadmap](./user/roadmap.md)
-- [Draft Ideas](./rollang/ideas.md)
+- [Releases](./dev/releases.md)
+- [Roadmap](./dev/roadmap.md)
+- [Draft Ideas](./dev/ideas.md)
 
-# For dnd nerds
+# For DnD nerds
 
 - [User Guide](./user/guide.md)
 
 # For software nerds
 
-- [Specification](./rollang/spec/index.md)
-  - [Types](./rollang/spec/types.md)
-  - [Data Structures](./rollang/spec/datastructs.md)
-  - [Operators](./rollang/spec/operators.md)
-  - [Variables & Bindings](./rollang/spec/varbind.md)
-  - [Functions](./rollang/spec/funtions.md)
-  - [Comments](./rollang/spec/comments.md)
-  - [Standard Library](./rollang/spec/stdlib.md)
+- [Specification](./dev/spec/index.md)
+  - [Types](./dev/spec/types.md)
+  - [Data Structures](./dev/spec/datastructs.md)
+  - [Operators](./dev/spec/operators.md)
+  - [Variables & Bindings](./dev/spec/varbind.md)
+  - [Functions](./dev/spec/funtions.md)
+  - [Comments](./dev/spec/comments.md)
+  - [Standard Library](./dev/spec/stdlib.md)
 
 
-- [Architecture](./rollang/arch/architecture.md)
-  - [Lexer](./rollang/arch/lexer.md)
-  - [Parsing](./rollang/arch/parsing.md)
-  - [VM](./rollang/arch/vm.md)
+- [Architecture](./dev/arch/architecture.md)
+  - [Lexer](./dev/arch/lexer.md)
+  - [Parsing](./dev/arch/parsing.md)
+  - [VM](./dev/arch/vm.md)
 
 
-- [PL Design](./rollang/lang/design.md)
+- [PL Design](./dev/lang/design.md)

@@ -1,83 +1,93 @@
-/// Type-erased errors
-// pub type BoxError = std::boxed::Box<
-//     dyn std::error::Error // Must implement `Error` to satisfy `?`
-//         + std::marker::Send // needed for threads
-//         + std::marker::Sync, // needed for threads
-// >;
-use nom::{
-    bytes::complete::tag,
-    character::complete::{char, digit0, one_of},
-    combinator::recognize,
-    multi::{many0, many1},
-    sequence::{preceded, terminated, tuple},
-    IResult,
-};
+mod expr;
 
-#[derive(Debug, PartialEq)]
-struct Rollable {
-    amount: u32,
-    sides: u32,
+use crate::lexer::{Lexer, SyntaxKind};
+use crate::syntax::{RollangLanguage, SyntaxNode};
+use expr::expr;
+use rowan::{Checkpoint, GreenNode, GreenNodeBuilder, Language};
+use std::iter::Peekable;
+
+pub struct Parser<'a> {
+    lexer: Peekable<Lexer<'a>>,
+    builder: GreenNodeBuilder<'static>,
 }
 
-fn parse_roll(input: &str) -> IResult<&str, &str> {
-    nom::bytes::complete::tag("roll")(input)
-}
-
-/// {INT}d{INT}
-fn parse_dice(input: &str) -> IResult<&str, Rollable> {
-    match tuple((digit0, tag("d"), digit0))(input) {
-        Ok((remaining_input, (amount, _, sides))) => {
-            let amount: u32 = amount.parse().unwrap();
-            let sides: u32 = sides.parse().unwrap();
-            Ok((remaining_input, Rollable { amount, sides }))
+impl<'a> Parser<'a> {
+    pub fn new(input: &'a str) -> Self {
+        Self {
+            lexer: Lexer::new(input).peekable(),
+            builder: GreenNodeBuilder::new(),
         }
-        Err(e) => Err(e),
     }
+
+    pub fn parse(mut self) -> Parse {
+        self.start_node(SyntaxKind::Root);
+
+        expr(&mut self);
+
+        self.finish_node();
+        Parse {
+            green_node: self.builder.finish(),
+        }
+    }
+
+    fn start_node(&mut self, kind: SyntaxKind) {
+        self.builder.start_node(RollangLanguage::kind_to_raw(kind));
+    }
+
+    fn start_node_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
+        self.builder
+            .start_node_at(checkpoint, RollangLanguage::kind_to_raw(kind));
+    }
+
+    fn checkpoint(&self) -> Checkpoint {
+        self.builder.checkpoint()
+    }
+
+    fn peek(&mut self) -> Option<Result<SyntaxKind, ()>> {
+        self.lexer.peek().map(|(kind, _)| *kind)
+    }
+
+    fn bump(&mut self) {
+        let (kind, text) = self.lexer.next().unwrap();
+
+        if let Ok(kind) = kind {
+            self.builder
+                .token(RollangLanguage::kind_to_raw(kind), text.into());
+        }
+    }
+
+    fn finish_node(&mut self) {
+        self.builder.finish_node();
+    }
+}
+
+pub struct Parse {
+    green_node: GreenNode,
+}
+
+impl Parse {
+    pub fn debug_tree(&self) -> String {
+        let syntax_node = SyntaxNode::new_root(self.green_node.clone());
+        let formatted = format!("{:#?}", syntax_node);
+
+        // We cut off the last byte because formatting the SyntaxNode adds a newline at the end.
+        formatted[0..formatted.len() - 1].to_string()
+    }
+}
+
+#[cfg(test)]
+fn check(input: &str, expected_tree: expect_test::Expect) {
+    let parse = Parser::new(input).parse();
+    expected_tree.assert_eq(&parse.debug_tree());
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use expect_test::expect;
 
     #[test]
-    fn test_parse_roll() {
-        assert_eq!(parse_roll("roll 2d8"), Ok((" 2d8", "roll")));
-        assert_eq!(
-            parse_roll("toll 2d8"),
-            Err(nom::Err::Error(nom::error::Error::new(
-                "toll 2d8",
-                nom::error::ErrorKind::Tag
-            )))
-        );
-    }
-
-    #[test]
-    fn test_parse_dice() {
-        assert_eq!(
-            parse_dice("2d8"),
-            Ok((
-                "",
-                Rollable {
-                    amount: 2,
-                    sides: 8
-                }
-            ))
-        );
-
-        assert_eq!(
-            parse_dice("qd8"),
-            Err(nom::Err::Error(nom::error::Error::new(
-                "qd8",
-                nom::error::ErrorKind::Tag
-            )))
-        );
-
-        assert_eq!(
-            parse_dice("5dv"),
-            Err(nom::Err::Error(nom::error::Error::new(
-                "5dv",
-                nom::error::ErrorKind::Tag
-            )))
-        );
+    fn parse_nothing() {
+        check("", expect![[r#"Root@0..0"#]]);
     }
 }

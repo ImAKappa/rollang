@@ -1,6 +1,6 @@
 # rollang
 
-A DSL and interpreter for DnD rolls. Inspired by [Roll20 Macro Language](https://wiki.roll20.net/Macro_Guide) and [Avrae Discord bot](https://avrae.io/commands)
+A DSL and interpreter for DnD rolls. Inspired by [Roll20 Dice Reference](https://wiki.roll20.net/Dice_Reference) and [Avrae Discord bot](https://avrae.io/commands)
 
 > This is just for fun. For actual DnD games, nothing beats real dice :)
 

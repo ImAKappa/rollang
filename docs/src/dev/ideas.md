@@ -1,5 +1,9 @@
 # Draft Ideas
 
+## Inspiration
+
+[DiceRoller (C++)](https://github.com/Rolisteam/DiceParser/blob/master/src/libparser/diceparser.cpp)
+
 # Drafts
 
 According to the [Basic Rules: Using Ability Scores](https://www.dndbeyond.com/sources/basic-rules/using-ability-scores),

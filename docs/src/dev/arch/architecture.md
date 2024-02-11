@@ -1,6 +1,5 @@
 # Architecture
 
-
 ## Usage
 
 The language is implemented by the `rollang` interpreter. There is a REPL, and alternatively you can write code in a `.roll` script files.
