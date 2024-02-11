@@ -1,6 +1,6 @@
 # rollang User Guide
 
-`rollang` is a language and interpreter for DnD players to easily simulate dice rolls.
+`rollang` is a language and roll simulator for DnD.
 
 > For DnD rules see the [DnD Beyond Introduction](https://www.dndbeyond.com/sources/basic-rules/introduction)
 
@@ -16,7 +16,7 @@ rollang
 A `>>>` will show up. This is the prompt of the `rollang` interpreter.
 
 ```python
-Rollang v0.1 12th Jan 2023
+Rollang v0.1.0
 >>>
 ```
 
@@ -24,6 +24,12 @@ If you want to record a session, you can use
 
 ```bash
 rollang --log PATH/TO/LOGFILE.txt
+```
+
+Rolls are random, but at the beginning of a session or `.roll` file (see below) you can set a seed to get a reproducible sequence of rolls:
+
+```python
+rollang --seed 1234
 ```
 
 ## Dice
@@ -42,32 +48,6 @@ If the number of dice is `1`, you can omit it
 1d20
 ```
 
-Create a collection of dice, called a **Rollset**
-
-```lua
->>> {1d20, 2d4}
-{1d20, 2d4}
-```
-
-Annotate dice with a string of text
-
-```lua
->>> 2d4[Fire Ball]
-2d4 Fire Ball
-```
-
-```lua
->>> {2d4[Fire Ball], 2d8[Lightning Strike]}
-{2d4 Fire Ball, 2d8 Lightning Strike}
-```
-
-Rollsets can be annotated too
-
-```lua
->>> {2d4[Fire Ball], 2d8[Lightning Strike]}[Combo]
-{2d4 Fire Ball, 2d8 Lightning Strike} Combo
-```
-
 ## Rolling
 
 You can roll dice using the `roll` command
@@ -76,394 +56,200 @@ Single die
 
 ```lua
 >>> roll 1d20
-7 <- 1d20
+7
 ```
+
+Or you can use the bang command `r!`:
+
+```rust
+>>> r! 1d20
+7
+```
+
+You can roll multiple die:
 
 ```lua
->>> roll 1d20[Fire]
-7 <- 1d20
+>>> r! 3d4 + 2d6
+12 <- (2, 2, 3) + (4, 1)
 ```
 
-Multiple separate dice rolls
+### Annotated roll
 
 ```lua
->>> roll (3d4 2d6)
-7 <- 3d4=[2, 2, 3]
-5 <- 2d6=[4, 1]
+>>> r!'Fire Ball' 2d8
 ```
-
-Alternatively, you can combine rolls by using a Rollset
-
-```lua
->>> roll {3d4, 2d6}[Combo]
-12 Combo <- 3d4=[2, 2, 3] 2d6=[4, 1]
-```
-
-Which also means you can roll multiple Rollsets
-
-```lua
->> roll ({3d4, 2d6} {4d6, 2d10})
-12 <-  3d4=[2, 2, 3]     2d6=[4, 1]
-23 <-  4d6=[4, 2, 5, 1]  2d10=[8, 3]
-```
-
-
-> Instead of typing `roll` over and over, you can use the _bang_-command `r!` like
->
-> ```bash
-> >>> r! d20
-> 17 <- d20
-> ```
-
-## Seed
-
-Rolls are random, but at the beginning of a session, `.roll` file (see below), or when running the interpreter, you can set a seed to get a reproducible sequence of random numbers:
-
-```python
->>> seed 1234
-```
-
-## Advantage/Disadvantage
-
-> See [Basic Rules#AdvantageDisadvantage](https://www.dndbeyond.com/sources/basic-rules/using-ability-scores#AdvantageandDisadvantage)
-
-Roll with Advantage
-
-```lua
->>> r!adv d20
-7    <- 1d20
-[16] <- 1d20
-```
-
-Roll with Disadvantage
-
-```python
->>> r!ddv d20
-[7] <- 1d20 
-16  <- 1d20
-```
-
-> Note: This is nearly equivalent to
->
-> ```bash
-> >>> r! max(2 * d20)
-> ```
->
-> Except the `radv` command will return both roll results, and format the output
 
 ## Modifiers
 
 You can append a modifier, some positive or negative number, to dice.
 
 ```python
->>> r! 1d20+4
-14 <- 2d10=[6, 4] +4
+>>> r! 2d10+4
+14 <- (6, 4)+4
 ```
 
-Don't include spaces by accident
+> Don't include spaces by accident
+>
+> ```python
+> >>> r! 1d20 +4
+> Error: Unable to parse roll
+> ```
 
-```python
->>> r! 2d20 +4
-Error
+## Roll Methods
+
+### Advantage/Disadvantage
+
+Rolling with advantage or disadvantage means rolling a second d20. With advantage means you take the higher result, disadvantage the lower.
+
+> See [Basic Rules#AdvantageDisadvantage](https://www.dndbeyond.com/sources/basic-rules/using-ability-scores#AdvantageandDisadvantage)
+
+Roll with Advantage
+
+```js
+>>> r!adv d20+5
+7 | [16] <- (2)+5 | (11)+5
 ```
 
-```python
->>> r! 1d20[Ability Check]-4[Debuff]
-2 <- 1d20[Ability Check]=6 -4[Debuf]
+Roll with Disadvantage
+
+```js
+>>> r!dis d20+5
+[7] | 16 <- (2)+5 | (11)+5
 ```
 
-> See [Custom Modifiers]() section below to see how to define your own modifiers
+### Attack Rolls, Saving Throws, and Ability Checks
 
-## Roll macro
+```js
+>>> r!atk(17) d20+4
+success <- (20)+4 > 17 AC 
+```
 
-Specify the kind of roll
+```js
+>>> r!sav(16, 'WIS') d20+4
+fail <- (3)+4 < 16 WIS DC
+```
+
+```js
+>>> r!chk(14, 'Athletics') d20+4
+succeed <- (11)+4 > 14 Athletics DC
+```
+
+### Critical Hit
+
+Critical hit calculations are based on standard 5e rules: double the amount of dice rolled, then add modifiers
+
+```lua
+>>> r!crit 3d8+4
+38 <- 2*(8, 3, 6)+4
+```
 
 ### Reroll
 
+Reroll any twos
+
 ```lua
->>> r!rr(< 2) d20 // Rerolls any result less than 2
+>>> r!rr(2) 4d12
+```
+
+Reroll any ones and twos
+
+```lua
+>>> r!rr(1, 2) 4d12
+```
+
+### Keep Highest
+
+Keep the two highest rolls
+
+```lua
+>>> r!kh(2) 4d12
+```
+
+### Keep Lowest
+
+Keep the two lowest rolls
+
+```lua
+>>> r!kl(2) 4d12
 ```
 
 ### Drop Highest
 
+Drops the two highest rolls
+
 ```lua
->>> r!dh(> 2) // Drops any result higher than 2
+>>> r!dh(2) 4d12
 ```
 
 ### Drop Lowest
 
-```lua
->>> r!dl(< 2) // Drops any result higher than 2
-```
-
-### Adv & Ddv
+Drop the two lowest rolls
 
 ```lua
->>> r!adv d20
->>> r!ddv d20
-```
-
-### Exploding Dice
-
-```js
->>> r!xplode(> 16) d20 // Rerolls and adds sum if greater than 16
-```
-
-### DC & AC
-
-```js
->>> r!sav(> 16) d20+4
-```
-
-```js
->>> r!atk(< 17) d20+4
+>>> r!dl(2) 4d12
 ```
 
 ## Bindings
 
-You can bind values, like a dice, number, or result, to a name. This makes it easier to save and reuse results.
+You can bind values, like a dice or number, to a name. This makes it easier to save and reuse results.
 
 ```rust
->>> my_binding := roll d20
->>> my_binding
+>>> my_roll := r! d20
+>>> my_roll
 7
 ```
 
-> ❗Note that you can't reassign a binding. If you want to reuse the same name, you have to write `name := roll d20` again. This will discard the previous value of `name`
+Bind new value (notice `=` instead of `:=`)
 
-> There are some other rules/restrictions on binding names. Please see the [rollang specification](../rollang/spec.md) for details
+```lua
+>>> my_roll = r! d20
+2
+```
 
-## Ability Scores
+> There are some other rules/restrictions on binding names. Please see the [rollang specification](../dev/spec.md) for details
+
+## Rollsets
+
+Rollang supports collection of named rolls, called `Rollsets`.
+
+There are built-in rollsets, but you can also define your own.
+
+### Ability Scores
 
 `ability_scores` is a default binding that generates ability scores according to the instructions in the [Basic Rules#DetermineAbilityScores](https://www.dndbeyond.com/sources/basic-rules/step-by-step-characters#3DetermineAbilityScores) on DnDBeyond
 
-```python
->>> roll dnd.ability_scores
-STR =15
-DEX =14
-CON =11
-INT =17
-WIS =10
-CHA =12
+```js
+>>> r!rr(1) dnd['Ability Scores']
+STR 15
+DEX 14 
+CON 11 
+INT 17 
+WIS 10
+CHA 12
 ```
 
-## Armor Class / Difficulty Class
+### User-Defined Rollsets
 
-```python
->>> ac 15
-AC =15
+```go
+>>> party_initiative := {'Utankh': d20-1, 'Mythelia': d20+1, 'Boro-Boro': d20}
 ```
 
-AC and DC can have modifiers, too
-
-```python
->>> 15ac +2
-AC=15 +2 ->17
+```lua
+>>> r! party_initiative['Mythelia']
+17 <- (16)+1
 ```
 
-As well as annotations
+### Initiative
 
-```python
->>> 15ac +2:"Spell effect"
-AC=15 +2:"Spell effect" ->17
-```
-
-The same applies to difficulty class, but you use `dc`
-
-```python
->>> 15dc+2
-DC=15 +2 ->17
-```
-
----
-
-## Ability Checks
-
-```python
->>> roll 3d6 > 6dc
-3d6 =[2, 4, 2] ->7 ->pass
-```
-
-```python
->>> roll [3d6, 2d8] > 20dc
-3d6=[2, 2, 1] 2d8=[6, 2] ->13 ->failure
-```
-
-```python
->>> roll 3d6 >= 6dc
-3d6=[2, 2, 2] ->6 ->pass
-```
-
-Alternatively, you can just use a number instead of the `dc` command, as long as you include brackets and spaces:
-
-```python
->>> roll 3d6 >= (6 - 2)
-3d6=[2, 2, 2] ->6 ->pass
-```
-
-```python
->>> roll 3d6 >= 6ac-2
-3d6=[2, 2, 2] ->6 ->pass
-```
-
----
-
-## Initiative
-
-For initiative, you can specify the number of combat participants
-
-```python
->>> roll (init 3)
-Initiative
-----------
-(1) 1d20 =16
-(2) 1d20 =12
-(3) 1d20 =4
-```
-
-Or provide a list of strings
-
-```python
->>> roll (init ["utahkh", "mythelia", "boro-boro"])
-Initiative
-----------
-(1) "mythelia"  =16
-(2) "boro-boro" =12
-(3) "utahkh"    =4
-```
-
-> For more advanced users, you can provide a list of Types that implement the `str` function
-
----
-
-## Attack rolls
-
-`atk` is just an alias for `1d20`
-
-```python
->>> roll atk
-1d20 =7
-```
-
-```python
->>> roll atk+4
-1d20 =5 +4 ->9
-```
-
-```python
->>> roll (atk +4)
-1d20 =5 +4 ->9
-```
-
-```cpp
->>> roll atk >= 15ac
-1d20 =12 ->failure
-```
-
-```cpp
->>> roll (atk +4 +2) >= 19ac-3
-1d20 =12 +4 +2 ->18 ->pass
-```
-
-Natural one auto-fails
-
-```cpp
->>> roll (atk +100) >= 15ac
-1d20 =1 +100 ->fail
-```
-
-Natural 20 auto-succeeds
-
-```cpp
->>> roll (atk -100) >= 15ac
-1d20 =20 -100 ->pass
-```
-
-### Saving Throws
-
-Like attack rolls, `sav` is an alias for a d20
-
-```python
->>> roll (sav +4 +2) >= 15dc
-1d20=12 +4 +2 ->18 ->pass
-```
-
----
-
-
-## Functions
-
-Some built-in functions in `rollang` are shown below. For a full list, see the specification docs.
-
-```python
->>> r! max(3d6)
-3d6 =[3, 6, 2] max ->6
-```
-
-Another example is `sum`. This is implicitly called using the roll (`roll`, `r!`) method
-
-```python
->>> sum(1, 2, 3)
-6
-```
-
-## Composite Roll
-
-Group rolls together into a `Composite Roll`
+For initiative, provide a rollset of your players
 
 ```rust
-Dragon :: Comp(
-    stats: roll ability_scores,
-    fire_breath: 4d8+4,
-    stomp: 3d6+2,
-)
+>>> r!init(party_initiative)
+Mythelia    16
+Boro-Boro   12
+Utankh      4
 ```
 
-> Note the use of `::` instead of `:=` for defining compositions
+## Further Reading
 
-```rust
->>> roll Dragon.fire_breath
-Dragon
-    .fire_breath =[3, 5, 1, 4] +4 ->17
-```
-
-Alternatively, roll all dice:
-
-```ts
->>> roll Dragon
-Dragon
-    .fire_breath =[3, 5, 1, 4]  +4   ->17
-    .stomp       =[6, 4, 6]     +2   ->18
-```
-
-Ability scores are an example of composition. When you run `roll abilities`,
-behind the scenes the interpreter runs:
-
-```ts
->>> roll Comp(
-    STR: 4d6:max, 
-    DEX: 4d6:max,
-    CON: 4d6:max,
-    INT: 4d6:max,
-    WIS: 4d6:max,
-    CHA: 4d6:max,
-)
-```
-
----
-
-## Source files
-
-You can write your rollang program in a plain-text file ending in a `.roll` extension.
-
-```rust
-// tutorial.roll
-r! ability_scores
-r! d20 > 15ac
-```
-
-## Comments
-
-Comments: `//`
-
-Multiline comments `/* */`. They are nestable!
+There are more details in the [spec](..dev/spec), but this is mostly for developers!

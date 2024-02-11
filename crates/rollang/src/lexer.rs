@@ -9,7 +9,7 @@ pub enum SyntaxKind {
     Whitespace,
 
     #[token("d")]
-    DiceOp,
+    D,
 
     #[regex("[1-9][0-9]*")]
     Number,
@@ -31,7 +31,8 @@ pub enum SyntaxKind {
 
     Error,
     Root,
-    BinOp,
+    BinaryExpr,
+    DiceExpr,
 }
 
 pub struct Lexer<'a> {
@@ -79,7 +80,7 @@ mod tests {
 
     #[test]
     fn lex_diceop() {
-        check("d", SyntaxKind::DiceOp);
+        check("d", SyntaxKind::D);
     }
 
     #[test]
@@ -105,7 +106,7 @@ mod tests {
         assert_eq!(lexer.next(), Some(Ok(SyntaxKind::Number)));
         assert_eq!(lexer.slice(), "200");
 
-        assert_eq!(lexer.next(), Some(Ok(SyntaxKind::DiceOp)));
+        assert_eq!(lexer.next(), Some(Ok(SyntaxKind::D)));
         assert_eq!(lexer.slice(), "d");
 
         assert_eq!(lexer.next(), Some(Ok(SyntaxKind::Number)));

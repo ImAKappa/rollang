@@ -1,15 +1,8 @@
-# Draft Ideas
+# Ideas
 
-## Inspiration
+## Syntax
 
-[DiceRoller (C++)](https://github.com/Rolisteam/DiceParser/blob/master/src/libparser/diceparser.cpp)
-
-# Drafts
-
-According to the [Basic Rules: Using Ability Scores](https://www.dndbeyond.com/sources/basic-rules/using-ability-scores),
-there are different kinds of rolls:
-
-## Group Checks
+### Group Checks
 
 You could roll multiple d20s in one command.
 
@@ -33,8 +26,72 @@ In this case, uthal's, mycin's, and gold's rolls are scoped to `groupcheck`.
 groupcheck.mycin
 ```
 
-## Extending Behaviour of Rolls
 
+## Interpreter
+
+[DiceRoller (C++)](https://github.com/Rolisteam/DiceParser/blob/master/src/libparser/diceparser.cpp)
+
+
+
+
+
+```js
+>>> r!init(['Utahkh', 'Mythelia', 'Boro-boro'])
+Initiative
+----------
+Mythelia    16
+Boro-Boro   12
+Utahkh      4
+```
+
+> For more advanced users, you can provide a list of Types that implement the `str` function
+
+## Composite Roll
+
+Group rolls together into a `Composite Roll`
+
+```rust
+Dragon :: Comp(
+    stats: roll ability_scores,
+    fire_breath: 4d8+4,
+    stomp: 3d6+2,
+)
+```
+
+> Note the use of `::` instead of `:=` for defining compositions
+
+```rust
+>>> roll Dragon.fire_breath
+Dragon
+    .fire_breath =[3, 5, 1, 4] +4 ->17
+```
+
+Alternatively, roll all dice:
+
+```ts
+>>> roll Dragon
+Dragon
+    .fire_breath =[3, 5, 1, 4]  +4   ->17
+    .stomp       =[6, 4, 6]     +2   ->18
+```
+
+Ability scores are an example of composition. When you run `roll abilities`,
+behind the scenes the interpreter runs:
+
+```ts
+>>> roll Comp(
+    STR: 4d6:max, 
+    DEX: 4d6:max,
+    CON: 4d6:max,
+    INT: 4d6:max,
+    WIS: 4d6:max,
+    CHA: 4d6:max,
+)
+```
+
+---
+
+## Extending Behaviour of Rolls
 
 `rollang` is essentially a framework for modifying a single function, `roll`.
 

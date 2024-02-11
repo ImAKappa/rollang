@@ -1,14 +1,16 @@
 use super::Parser;
 use crate::lexer::SyntaxKind;
 
-enum Op {
+// If I need to add PrefixOp support, see: https://lunacookies.github.io/lang/11/
+
+enum InfixOp {
     Add,
     Sub,
     Mul,
     Div,
 }
 
-impl Op {
+impl InfixOp {
     fn binding_power(&self) -> (u8, u8) {
         match self {
             Self::Add | Self::Sub => (1, 2),
@@ -31,10 +33,10 @@ pub fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) {
 
     loop {
         let op = match p.peek() {
-            Some(Ok(SyntaxKind::Plus)) => Op::Add,
-            Some(Ok(SyntaxKind::Minus)) => Op::Sub,
-            Some(Ok(SyntaxKind::Star)) => Op::Mul,
-            Some(Ok(SyntaxKind::Slash)) => Op::Div,
+            Some(Ok(SyntaxKind::Plus)) => InfixOp::Add,
+            Some(Ok(SyntaxKind::Minus)) => InfixOp::Sub,
+            Some(Ok(SyntaxKind::Star)) => InfixOp::Mul,
+            Some(Ok(SyntaxKind::Slash)) => InfixOp::Div,
             _ => return, // We'll handle errors later
         };
 
@@ -47,7 +49,7 @@ pub fn expr_binding_power(p: &mut Parser, minimum_binding_power: u8) {
         // Eat the operators token
         p.bump();
 
-        p.start_node_at(checkpoint, SyntaxKind::BinOp);
+        p.start_node_at(checkpoint, SyntaxKind::BinaryExpr);
         expr_binding_power(p, right_binding_power);
         p.finish_node();
     }
@@ -74,7 +76,7 @@ Root@0..3
             "1+2",
             expect![[r#"
 Root@0..3
-  BinOp@0..3
+  BinaryExpr@0..3
     Number@0..1 "1"
     Plus@1..2 "+"
     Number@2..3 "2""#]],
@@ -87,9 +89,9 @@ Root@0..3
             "1+2+3+4",
             expect![[r#"
 Root@0..7
-  BinOp@0..7
-    BinOp@0..5
-      BinOp@0..3
+  BinaryExpr@0..7
+    BinaryExpr@0..5
+      BinaryExpr@0..3
         Number@0..1 "1"
         Plus@1..2 "+"
         Number@2..3 "2"
@@ -106,11 +108,11 @@ Root@0..7
             "1+2*3-4",
             expect![[r#"
 Root@0..7
-  BinOp@0..7
-    BinOp@0..5
+  BinaryExpr@0..7
+    BinaryExpr@0..5
       Number@0..1 "1"
       Plus@1..2 "+"
-      BinOp@2..5
+      BinaryExpr@2..5
         Number@2..3 "2"
         Star@3..4 "*"
         Number@4..5 "3"
