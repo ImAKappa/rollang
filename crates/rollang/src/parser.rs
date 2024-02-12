@@ -1,63 +1,66 @@
+mod event;
 mod expr;
+mod sink;
+mod source;
 
-use crate::lexer::{Lexer, SyntaxKind};
-use crate::syntax::{RollangLanguage, SyntaxNode};
+use crate::lexer::{Lexeme, Lexer, SyntaxKind};
+use crate::syntax::SyntaxNode;
+use event::Event;
 use expr::expr;
-use rowan::{Checkpoint, GreenNode, GreenNodeBuilder, Language};
-use std::iter::Peekable;
+use rowan::GreenNode;
+use sink::Sink;
+use source::Source;
 
-pub struct Parser<'a> {
-    lexer: Peekable<Lexer<'a>>,
-    builder: GreenNodeBuilder<'static>,
+struct Parser<'l, 'input> {
+    source: Source<'l, 'input>,
+    events: Vec<Event>,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(input: &'a str) -> Self {
+impl<'l, 'input> Parser<'l, 'input> {
+    pub fn new(lexemes: &'l [Lexeme<'input>]) -> Self {
         Self {
-            lexer: Lexer::new(input).peekable(),
-            builder: GreenNodeBuilder::new(),
+            source: Source::new(lexemes),
+            events: Vec::new(),
         }
     }
 
-    pub fn parse(mut self) -> Parse {
+    fn parse(mut self) -> Vec<Event> {
         self.start_node(SyntaxKind::Root);
-
         expr(&mut self);
-
         self.finish_node();
-        Parse {
-            green_node: self.builder.finish(),
-        }
+
+        self.events
     }
 
     fn start_node(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(RollangLanguage::kind_to_raw(kind));
+        self.events.push(Event::StartNode { kind });
     }
 
-    fn start_node_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
-        self.builder
-            .start_node_at(checkpoint, RollangLanguage::kind_to_raw(kind));
-    }
-
-    fn checkpoint(&self) -> Checkpoint {
-        self.builder.checkpoint()
-    }
-
-    fn peek(&mut self) -> Option<Result<SyntaxKind, ()>> {
-        self.lexer.peek().map(|(kind, _)| *kind)
-    }
-
-    fn bump(&mut self) {
-        let (kind, text) = self.lexer.next().unwrap();
-
-        if let Ok(kind) = kind {
-            self.builder
-                .token(RollangLanguage::kind_to_raw(kind), text.into());
-        }
+    fn start_node_at(&mut self, checkpoint: usize, kind: SyntaxKind) {
+        self.events.push(Event::StartNodeAt { kind, checkpoint });
     }
 
     fn finish_node(&mut self) {
-        self.builder.finish_node();
+        self.events.push(Event::FinishNode);
+    }
+
+    fn bump(&mut self) {
+        let Lexeme { kind, text } = self.source.next_lexeme().unwrap();
+
+        if let Ok(kind) = kind {
+            self.events.push(Event::AddToken {
+                kind: *kind,
+                text: (*text).into(),
+            });
+        }
+    }
+
+    fn checkpoint(&self) -> usize {
+        self.events.len()
+    }
+
+    fn peek(&mut self) -> Option<Result<SyntaxKind, ()>> {
+        self.source.peek_kind()
     }
 }
 
@@ -75,9 +78,20 @@ impl Parse {
     }
 }
 
+pub fn parse(input: &str) -> Parse {
+    let lexemes: Vec<_> = Lexer::new(input).collect();
+    let parser = Parser::new(&lexemes);
+    let events = parser.parse();
+    let sink = Sink::new(&lexemes, events);
+
+    Parse {
+        green_node: sink.finish(),
+    }
+}
+
 #[cfg(test)]
 fn check(input: &str, expected_tree: expect_test::Expect) {
-    let parse = Parser::new(input).parse();
+    let parse = parse(input);
     expected_tree.assert_eq(&parse.debug_tree());
 }
 
@@ -89,5 +103,15 @@ mod tests {
     #[test]
     fn parse_nothing() {
         check("", expect![[r#"Root@0..0"#]]);
+    }
+
+    #[test]
+    fn parse_whitespace() {
+        check(
+            "   ",
+            expect![[r#"
+Root@0..3
+  Whitespace@0..3 "   ""#]],
+        );
     }
 }

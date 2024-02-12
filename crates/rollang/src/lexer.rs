@@ -8,8 +8,11 @@ pub enum SyntaxKind {
     #[regex(" +")]
     Whitespace,
 
-    #[token("d")]
-    D,
+    #[regex("([1-9][0-9]*)?d[1-9][0-9]*")]
+    Dice,
+
+    #[regex("[A-Za-z][A-Za-z0-9]*")]
+    Ident,
 
     #[regex("[1-9][0-9]*")]
     Number,
@@ -26,8 +29,17 @@ pub enum SyntaxKind {
     #[token("/")]
     Slash,
 
+    #[token("(")]
+    LParen,
+
+    #[token(")")]
+    RParen,
+
     #[token("end")]
     End,
+
+    #[regex("#.*")]
+    Comment,
 
     Error,
     Root,
@@ -47,14 +59,20 @@ impl<'a> Lexer<'a> {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Lexeme<'a> {
+    pub(crate) kind: Result<SyntaxKind, ()>,
+    pub(crate) text: &'a str,
+}
+
 impl<'a> Iterator for Lexer<'a> {
-    type Item = (Result<SyntaxKind, ()>, &'a str);
+    type Item = Lexeme<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let kind = self.inner.next()?;
         let text = self.inner.slice();
 
-        Some((kind, text))
+        Some(Self::Item { kind, text })
     }
 }
 
@@ -64,7 +82,13 @@ mod tests {
 
     fn check(input: &str, kind: SyntaxKind) {
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some((Ok(kind), input)));
+        assert_eq!(
+            lexer.next(),
+            Some(Lexeme {
+                kind: Ok(kind),
+                text: input
+            })
+        );
     }
 
     #[test]
@@ -79,8 +103,40 @@ mod tests {
     }
 
     #[test]
-    fn lex_diceop() {
-        check("d", SyntaxKind::D);
+    fn lex_dice() {
+        check("d20", SyntaxKind::Dice);
+        check("1d20", SyntaxKind::Dice);
+        check("100d24", SyntaxKind::Dice);
+    }
+
+    #[test]
+    fn lex_alphabetic_identifier() {
+        check("abcd", SyntaxKind::Ident);
+    }
+
+    #[test]
+    fn lex_alphanumeric_identifier() {
+        check("ab123cde456", SyntaxKind::Ident);
+    }
+
+    #[test]
+    fn lex_mixed_case_identifier() {
+        check("ABCdef", SyntaxKind::Ident);
+    }
+
+    #[test]
+    fn lex_single_char_identifier() {
+        check("x", SyntaxKind::Ident);
+    }
+
+    #[test]
+    fn lex_left_parenthesis() {
+        check("(", SyntaxKind::LParen);
+    }
+
+    #[test]
+    fn lex_right_parenthesis() {
+        check(")", SyntaxKind::RParen);
     }
 
     #[test]
@@ -99,30 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn lex_valid_dice() {
-        let command = "200d12";
-        let mut lexer = SyntaxKind::lexer(command);
-
-        assert_eq!(lexer.next(), Some(Ok(SyntaxKind::Number)));
-        assert_eq!(lexer.slice(), "200");
-
-        assert_eq!(lexer.next(), Some(Ok(SyntaxKind::D)));
-        assert_eq!(lexer.slice(), "d");
-
-        assert_eq!(lexer.next(), Some(Ok(SyntaxKind::Number)));
-        assert_eq!(lexer.slice(), "12");
-    }
-
-    #[test]
-    fn lex_invalid_qty_of_dice() {
-        let command = "ad20";
-        let mut lexer = SyntaxKind::lexer(command);
-        assert_eq!(lexer.next(), Some(Err(())));
-        assert_eq!(lexer.slice(), "a");
-
-        let command = "02d8";
-        let mut lexer = SyntaxKind::lexer(command);
-        assert_eq!(lexer.next(), Some(Err(())));
-        assert_eq!(lexer.slice(), "0");
+    fn lex_comment() {
+        check("# foo", SyntaxKind::Comment);
     }
 }

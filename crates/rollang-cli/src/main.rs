@@ -1,4 +1,4 @@
-use rollang::parser::Parser;
+use rollang::parser::parse;
 use std::io::{self, Write};
 
 fn main() -> io::Result<()> {
@@ -16,7 +16,7 @@ fn main() -> io::Result<()> {
         stdout.flush()?;
 
         stdin.read_line(&mut input)?;
-        let parse = Parser::new(&input).parse();
+        let parse = parse(&input);
         println!("{}", parse.debug_tree());
 
         // match run(input.trim(), &mut env) {
