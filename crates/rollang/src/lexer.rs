@@ -5,7 +5,7 @@ use num_derive::{FromPrimitive, ToPrimitive};
     Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Logos, FromPrimitive, ToPrimitive, Hash,
 )]
 pub enum SyntaxKind {
-    #[regex(" +")]
+    #[regex("[ \n]+")]
     Whitespace,
 
     #[regex("([1-9][0-9]*)?d[1-9][0-9]*")]
@@ -45,6 +45,12 @@ pub enum SyntaxKind {
     Root,
     BinaryExpr,
     DiceExpr,
+}
+
+impl SyntaxKind {
+    pub(crate) fn is_trivia(self) -> bool {
+        matches!(self, Self::Whitespace | Self::Comment)
+    }
 }
 
 pub struct Lexer<'a> {
@@ -157,5 +163,10 @@ mod tests {
     #[test]
     fn lex_comment() {
         check("# foo", SyntaxKind::Comment);
+    }
+
+    #[test]
+    fn lex_newlines() {
+        check(" \n ", SyntaxKind::Whitespace);
     }
 }

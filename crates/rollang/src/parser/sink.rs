@@ -44,7 +44,7 @@ impl<'l, 'input> Sink<'l, 'input> {
                 Event::FinishNode => self.builder.finish_node(),
             }
 
-            self.eat_whitespace();
+            self.eat_trivia();
         }
 
         self.builder.finish()
@@ -57,10 +57,12 @@ impl<'l, 'input> Sink<'l, 'input> {
         self.cursor += 1;
     }
 
-    fn eat_whitespace(&mut self) {
+    fn eat_trivia(&mut self) {
         while let Some(lexeme) = self.lexemes.get(self.cursor) {
-            if lexeme.kind != Ok(SyntaxKind::Whitespace) {
-                break;
+            if let Ok(kind) = lexeme.kind {
+                if !kind.is_trivia() {
+                    break;
+                }
             }
 
             self.token(lexeme.kind, lexeme.text.into())
