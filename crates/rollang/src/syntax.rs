@@ -1,5 +1,55 @@
-use crate::lexer::SyntaxKind;
+use lexer::TokenKind;
+use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
+
+#[derive(Debug, Copy, Clone, PartialEq, FromPrimitive, ToPrimitive)]
+pub(crate) enum SyntaxKind {
+    Whitespace,
+    Dice,
+    Ident,
+    Number,
+    Plus,
+    Minus,
+    Star,
+    Slash,
+    Equals,
+    LParen,
+    RParen,
+    Comment,
+    Error,
+    Root,
+    InfixExpr,
+    Literal,
+    ParenExpr,
+    PrefixExpr,
+    VariableRef,
+}
+
+impl SyntaxKind {
+    pub(crate) fn is_trivia(self) -> bool {
+        matches!(self, Self::Whitespace | Self::Comment)
+    }
+}
+
+impl From<TokenKind> for SyntaxKind {
+    fn from(token_kind: TokenKind) -> Self {
+        match token_kind {
+            TokenKind::Whitespace => Self::Whitespace,
+            TokenKind::Dice => Self::Dice,
+            TokenKind::Ident => Self::Ident,
+            TokenKind::Number => Self::Number,
+            TokenKind::Plus => Self::Plus,
+            TokenKind::Minus => Self::Minus,
+            TokenKind::Star => Self::Star,
+            TokenKind::Slash => Self::Slash,
+            TokenKind::Equals => Self::Equals,
+            TokenKind::LParen => Self::LParen,
+            TokenKind::RParen => Self::RParen,
+            TokenKind::Comment => Self::Comment,
+            TokenKind::Error => Self::Error,
+        }
+    }
+}
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum RollangLanguage {}

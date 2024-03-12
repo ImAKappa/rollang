@@ -1,47 +1,64 @@
 use super::event::Event;
-use crate::lexer::{Lexeme, SyntaxKind};
 use crate::syntax::RollangLanguage;
+use lexer::{SyntaxKind, Token};
 use rowan::{GreenNode, GreenNodeBuilder, Language};
 use smol_str::SmolStr;
+use std::mem;
 
-pub(super) struct Sink<'l, 'input> {
+pub(super) struct Sink<'t, 'input> {
     builder: GreenNodeBuilder<'static>,
-    lexemes: &'l [Lexeme<'input>],
+    tokens: &'t [Token<'input>],
     cursor: usize,
     events: Vec<Event>,
 }
 
-impl<'l, 'input> Sink<'l, 'input> {
-    pub fn new(lexemes: &'l [Lexeme<'input>], events: Vec<Event>) -> Self {
+impl<'t, 'input> Sink<'t, 'input> {
+    pub fn new(tokens: &'t [Token<'input>], events: Vec<Event>) -> Self {
         Self {
             builder: GreenNodeBuilder::new(),
-            lexemes,
+            tokens,
             cursor: 0,
             events,
         }
     }
 
     pub fn finish(mut self) -> GreenNode {
-        let mut reordered_events = self.events.clone();
+        for idx in 0..self.events.len() {
+            match mem::replace(&mut self.events[idx], Event::Placeholder) {
+                Event::StartNode {
+                    kind,
+                    forward_parent,
+                } => {
+                    let mut kinds = vec![kind];
 
-        for (idx, event) in self.events.iter().enumerate() {
-            if let Event::StartNodeAt { kind, checkpoint } = event {
-                reordered_events.remove(idx);
-                reordered_events.insert(*checkpoint, Event::StartNode { kind: *kind });
-            }
-        }
+                    let mut idx = idx;
+                    let mut forward_parent = forward_parent;
 
-        for event in reordered_events {
-            match event {
-                Event::StartNode { kind } => {
-                    self.builder.start_node(RollangLanguage::kind_to_raw(kind))
+                    // Keep walking through forward parents of forward parents until we
+                    // we reach a node that without a forward parent
+                    while let Some(fp) = forward_parent {
+                        idx += fp;
+
+                        forward_parent = if let Event::StartNode {
+                            kind,
+                            forward_parent,
+                        } =
+                            mem::replace(&mut self.events[idx], Event::Placeholder)
+                        {
+                            kinds.push(kind);
+                            forward_parent
+                        } else {
+                            unreachable!();
+                        };
+                    }
+
+                    for kind in kinds.into_iter().rev() {
+                        self.builder.start_node(RollangLanguage::kind_to_raw(kind));
+                    }
                 }
-                Event::StartNodeAt {
-                    kind: _,
-                    checkpoint: _,
-                } => unreachable!(),
-                Event::AddToken { kind, text } => self.token(Ok(kind), text),
+                Event::AddToken => self.token(),
                 Event::FinishNode => self.builder.finish_node(),
+                Event::Placeholder => {}
             }
 
             self.eat_trivia();
@@ -50,22 +67,24 @@ impl<'l, 'input> Sink<'l, 'input> {
         self.builder.finish()
     }
 
-    fn token(&mut self, kind: Result<SyntaxKind, ()>, text: SmolStr) {
+    fn token(&mut self) {
+        let Token { kind, text } = self.tokens[self.cursor];
+
         let kind = kind.unwrap_or(SyntaxKind::Error);
         self.builder
-            .token(RollangLanguage::kind_to_raw(kind), text.as_str());
+            .token(RollangLanguage::kind_to_raw(kind), text.into());
         self.cursor += 1;
     }
 
     fn eat_trivia(&mut self) {
-        while let Some(lexeme) = self.lexemes.get(self.cursor) {
-            if let Ok(kind) = lexeme.kind {
+        while let Some(token) = self.tokens.get(self.cursor) {
+            if let Ok(kind) = token.kind {
                 if !kind.is_trivia() {
                     break;
                 }
             }
 
-            self.token(lexeme.kind, lexeme.text.into())
+            self.token();
         }
     }
 }

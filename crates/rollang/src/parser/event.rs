@@ -1,10 +1,12 @@
-use crate::lexer::SyntaxKind;
-use smol_str::SmolStr;
+use lexer::SyntaxKind;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(super) enum Event {
-    StartNode { kind: SyntaxKind },
-    StartNodeAt { kind: SyntaxKind, checkpoint: usize },
-    AddToken { kind: SyntaxKind, text: SmolStr },
+    StartNode {
+        kind: SyntaxKind,
+        forward_parent: Option<usize>,
+    },
+    AddToken,
     FinishNode,
+    Placeholder,
 }

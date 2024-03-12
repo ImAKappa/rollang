@@ -1,63 +1,73 @@
 mod event;
 mod expr;
+mod marker;
 mod sink;
 mod source;
 
-use crate::lexer::{Lexeme, Lexer, SyntaxKind};
 use crate::syntax::SyntaxNode;
+use crate::syntax::{SyntaxKind, SyntaxNode};
 use event::Event;
 use expr::expr;
+use lexer::{Lexer, Token};
+use marker::Marker;
 use rowan::GreenNode;
 use sink::Sink;
 use source::Source;
 
-struct Parser<'l, 'input> {
-    source: Source<'l, 'input>,
+struct Parser<'t, 'input> {
+    source: Source<'t, 'input>,
     events: Vec<Event>,
 }
 
-impl<'l, 'input> Parser<'l, 'input> {
-    pub fn new(lexemes: &'l [Lexeme<'input>]) -> Self {
+impl<'t, 'input> Parser<'t, 'input> {
+    pub fn new(tokens: &'t [Token<'input>]) -> Self {
         Self {
-            source: Source::new(lexemes),
+            source: Source::new(tokens),
             events: Vec::new(),
         }
     }
 
     fn parse(mut self) -> Vec<Event> {
-        self.start_node(SyntaxKind::Root);
+        let m = self.start();
         expr(&mut self);
-        self.finish_node();
+        m.complete(&mut self, SyntaxKind::Root);
 
         self.events
     }
 
-    fn start_node(&mut self, kind: SyntaxKind) {
-        self.events.push(Event::StartNode { kind });
+    fn start(&mut self) -> Marker {
+        let pos = self.events.len();
+        self.events.push(Event::Placeholder);
+        Marker::new(pos)
     }
 
-    fn start_node_at(&mut self, checkpoint: usize, kind: SyntaxKind) {
-        self.events.push(Event::StartNodeAt { kind, checkpoint });
+    fn at(&mut self, kind: SyntaxKind) -> bool {
+        self.peek() == Some(Ok(kind))
     }
 
-    fn finish_node(&mut self) {
-        self.events.push(Event::FinishNode);
-    }
+    // fn start_node(&mut self, kind: SyntaxKind) {
+    //     self.events.push(Event::StartNode {
+    //         kind,
+    //         forward_parent: None,
+    //     });
+    // }
+
+    // fn start_node_at(&mut self, checkpoint: usize, kind: SyntaxKind) {
+    //     self.events.push(Event::StartNodeAt { kind, checkpoint });
+    // }
+
+    // fn finish_node(&mut self) {
+    //     self.events.push(Event::FinishNode);
+    // }
 
     fn bump(&mut self) {
-        let Lexeme { kind, text } = self.source.next_lexeme().unwrap();
-
-        if let Ok(kind) = kind {
-            self.events.push(Event::AddToken {
-                kind: *kind,
-                text: (*text).into(),
-            });
-        }
+        self.source.next_token().unwrap();
+        self.events.push(Event::AddToken);
     }
 
-    fn checkpoint(&self) -> usize {
-        self.events.len()
-    }
+    // fn checkpoint(&self) -> usize {
+    //     self.events.len()
+    // }
 
     fn peek(&mut self) -> Option<Result<SyntaxKind, ()>> {
         self.source.peek_kind()
@@ -79,10 +89,10 @@ impl Parse {
 }
 
 pub fn parse(input: &str) -> Parse {
-    let lexemes: Vec<_> = Lexer::new(input).collect();
-    let parser = Parser::new(&lexemes);
+    let tokens: Vec<_> = Lexer::new(input).collect();
+    let parser = Parser::new(&tokens);
     let events = parser.parse();
-    let sink = Sink::new(&lexemes, events);
+    let sink = Sink::new(&tokens, events);
 
     Parse {
         green_node: sink.finish(),
@@ -135,8 +145,8 @@ Root@0..8
             expect![[r##"
 Root@0..35
   Whitespace@0..1 "\n"
-  BinaryExpr@1..35
-    BinaryExpr@1..21
+  InfixExpr@1..35
+    InfixExpr@1..21
       Number@1..2 "1"
       Whitespace@2..5 "\n  "
       Plus@5..6 "+"
