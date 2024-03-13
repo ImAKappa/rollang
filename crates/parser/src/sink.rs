@@ -1,11 +1,10 @@
 use super::event::Event;
-use crate::syntax::RollangLanguage;
-use lexer::{SyntaxKind, Token};
+use lexer::Token;
 use rowan::{GreenNode, GreenNodeBuilder, Language};
-use smol_str::SmolStr;
 use std::mem;
+use syntax::{RollangLanguage, SyntaxKind};
 
-pub(super) struct Sink<'t, 'input> {
+pub(crate) struct Sink<'t, 'input> {
     builder: GreenNodeBuilder<'static>,
     tokens: &'t [Token<'input>],
     cursor: usize,
@@ -70,16 +69,16 @@ impl<'t, 'input> Sink<'t, 'input> {
     fn token(&mut self) {
         let Token { kind, text } = self.tokens[self.cursor];
 
-        let kind = kind.unwrap_or(SyntaxKind::Error);
+        let kind = kind.unwrap_or(lexer::TokenKind::Error);
         self.builder
-            .token(RollangLanguage::kind_to_raw(kind), text.into());
+            .token(RollangLanguage::kind_to_raw(kind.into()), text.into());
         self.cursor += 1;
     }
 
     fn eat_trivia(&mut self) {
         while let Some(token) = self.tokens.get(self.cursor) {
             if let Ok(kind) = token.kind {
-                if !kind.is_trivia() {
+                if !SyntaxKind::from(kind).is_trivia() {
                     break;
                 }
             }

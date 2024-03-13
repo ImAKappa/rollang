@@ -17,8 +17,8 @@ impl<'a> Lexer<'a> {
 
 #[derive(Debug, PartialEq)]
 pub struct Token<'a> {
-    pub(crate) kind: Result<TokenKind, ()>,
-    pub(crate) text: &'a str,
+    pub kind: Result<TokenKind, ()>,
+    pub text: &'a str,
 }
 
 impl<'a> Iterator for Lexer<'a> {

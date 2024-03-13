@@ -136,6 +136,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
+name = "parser"
+version = "0.1.0"
+dependencies = [
+ "drop_bomb",
+ "expect-test",
+ "lexer",
+ "rowan",
+ "smol_str",
+ "syntax",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -163,20 +175,7 @@ checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
 name = "rollang"
 version = "0.1.0"
 dependencies = [
- "drop_bomb",
- "expect-test",
- "lexer",
- "num-derive",
- "num-traits",
- "rowan",
- "smol_str",
-]
-
-[[package]]
-name = "rollang-cli"
-version = "0.1.0"
-dependencies = [
- "rollang",
+ "parser",
 ]
 
 [[package]]
@@ -247,6 +246,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "syntax"
+version = "0.1.0"
+dependencies = [
+ "lexer",
+ "num-derive",
+ "num-traits",
+ "rowan",
 ]
 
 [[package]]

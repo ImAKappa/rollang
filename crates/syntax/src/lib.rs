@@ -2,9 +2,10 @@ use lexer::TokenKind;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 
-#[derive(Debug, Copy, Clone, PartialEq, FromPrimitive, ToPrimitive)]
-pub(crate) enum SyntaxKind {
+#[derive(Debug, Copy, Clone, PartialEq, Eq, FromPrimitive, ToPrimitive, Hash, PartialOrd, Ord)]
+pub enum SyntaxKind {
     Whitespace,
+    LetKw,
     Dice,
     Ident,
     Number,
@@ -23,10 +24,11 @@ pub(crate) enum SyntaxKind {
     ParenExpr,
     PrefixExpr,
     VariableRef,
+    VariableDef,
 }
 
 impl SyntaxKind {
-    pub(crate) fn is_trivia(self) -> bool {
+    pub fn is_trivia(self) -> bool {
         matches!(self, Self::Whitespace | Self::Comment)
     }
 }
@@ -35,6 +37,7 @@ impl From<TokenKind> for SyntaxKind {
     fn from(token_kind: TokenKind) -> Self {
         match token_kind {
             TokenKind::Whitespace => Self::Whitespace,
+            TokenKind::Let => Self::LetKw,
             TokenKind::Dice => Self::Dice,
             TokenKind::Ident => Self::Ident,
             TokenKind::Number => Self::Number,
@@ -51,6 +54,8 @@ impl From<TokenKind> for SyntaxKind {
     }
 }
 
+pub type SyntaxNode = rowan::SyntaxNode<RollangLanguage>;
+
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum RollangLanguage {}
 
@@ -65,5 +70,3 @@ impl rowan::Language for RollangLanguage {
         rowan::SyntaxKind(kind.to_u16().unwrap())
     }
 }
-
-pub type SyntaxNode = rowan::SyntaxNode<RollangLanguage>;
