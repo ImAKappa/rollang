@@ -26,14 +26,9 @@ In this case, uthal's, mycin's, and gold's rolls are scoped to `groupcheck`.
 groupcheck.mycin
 ```
 
-
 ## Interpreter
 
 [DiceRoller (C++)](https://github.com/Rolisteam/DiceParser/blob/master/src/libparser/diceparser.cpp)
-
-
-
-
 
 ```js
 >>> r!init(['Utahkh', 'Mythelia', 'Boro-boro'])
@@ -97,8 +92,7 @@ behind the scenes the interpreter runs:
 
 1. The general **input** is a set of `Rollable` entities. You bind Modifiers to each input
 2. The Modifiers are functions that modify the result of the roll. You chain together modifiers to acheive different roll affects
-2. The **output** is a list of numbers and the sum of that list: `Roll<Result(number[]), Sum(number)>`
-
+3. The **output** is a list of numbers and the sum of that list: `Roll<Result(number[]), Sum(number)>`
 
 ## Example
 
@@ -150,5 +144,50 @@ roll d20:adv
 
 Basically, the idea is the user of `rollang` decides how to manipulate the results of a roll, while the interpreter does the bookkeeping for you.
 
-
 [Micro features of Programming languages](https://buttondown.email/hillelwayne/archive/microfeatures-id-like-to-see-in-more-languages/)
+
+## Rollsets
+
+Rollang supports collection of named rolls, called `Rollsets`.
+
+There are built-in rollsets, but you can also define your own.
+
+### Ability Scores
+
+`ability_scores` is a default binding that generates ability scores according to the instructions in the [Basic Rules#DetermineAbilityScores](https://www.dndbeyond.com/sources/basic-rules/step-by-step-characters#3DetermineAbilityScores) on DnDBeyond
+
+```js
+>>> r!rr(1) dnd['Ability Scores']
+STR 15
+DEX 14 
+CON 11 
+INT 17 
+WIS 10
+CHA 12
+```
+
+### User-Defined Rollsets
+
+```go
+>>> party_initiative := {'Utankh': d20-1, 'Mythelia': d20+1, 'Boro-Boro': d20}
+```
+
+```lua
+>>> r! party_initiative['Mythelia']
+17 <- (16)+1
+```
+
+### Initiative
+
+For initiative, provide a rollset of your players
+
+```rust
+>>> r!init(party_initiative)
+Mythelia    16
+Boro-Boro   12
+Utankh      4
+```
+
+## Further Reading
+
+There are more details in the [spec](..dev/spec), but this is mostly for developers!

@@ -1,9 +1,66 @@
 # rollang User Guide
 
-`rollang` is a language and roll simulator for DnD.
+`rollang` is a DnD dice rolling simulator.
 
-> For DnD rules see the [DnD Beyond Introduction](https://www.dndbeyond.com/sources/basic-rules/introduction)
+> For DnD rules see the DnD Basic Rules [2014](https://www.dndbeyond.com/sources/basic-rules/introduction) or [2024](https://www.dndbeyond.com/sources/dnd/br-2024/playing-the-game).
 
+## Why?
+
+There are many existing dice rollers - even Google has a built in widget for dice rolling.
+However, some are too simple and inflexible, and others have really complicated notation.
+
+`rollang` provides a simple, yet flexible way to roll dice.
+
+## TL;DR
+
+Want to roll a d20?
+
+```python
+>>> r d20
+16
+```
+
+Want to perform a saving throw?
+
+```python
+>>> r d20 > dc16 "DEX"
+14 < DC16 failed DEX save
+```
+
+Or an attack roll?
+
+```python
+>>> r d20
+20
+```
+
+Want to roll with advantage or disadvantage?
+
+```python
+>>> ra d20
+<16> & 4
+>>> rd d20
+16 & <4>
+```
+
+Want multiple annotated damage rolls?
+
+```python
+>>> r 3d6+5 "Fireball" & 2d4 "Ray of Frost"
+13  Fireball        [4 + 3 + 6]
+3   Ray of Frost    [1 + 2]
+```
+
+Want to reuse rolls?
+
+```python
+>>> combo := 3d6+5 "Fireball" & 2d4 "Ray of Frost"
+>>> r combo
+8  Fireball        [2 + 5 + 1]
+7  Ray of Frost    [3 + 4]
+```
+
+See below for more commands.
 
 ## Command-Line Iterface
 
@@ -50,52 +107,45 @@ If the number of dice is `1`, you can omit it
 
 ## Rolling
 
-You can roll dice using the `roll` command
+You can roll dice using the `r` command
 
-Single die
+Single die:
 
 ```lua
->>> roll 1d20
+>>> r 1d20
 7
 ```
 
-Or you can use the bang command `r!`:
-
-```rust
->>> r! 1d20
-7
-```
-
-You can roll multiple die:
+To combine multiple dice rolls use `+`:
 
 ```lua
->>> r! 3d4 + 2d6
-12 <- (2, 2, 3) + (4, 1)
+>>> r 3d4 + 2d6
+12 <= (2+2+3) + (4+1)
 ```
 
-### Annotated roll
+Alternatively, perform multiple seperate rolls using `&`:
 
 ```lua
->>> r!'Fire Ball' 2d8
+>>> r 3d4 & 2d6
+7 <= (2+2+3)
+5 <= (4+1)
 ```
 
-## Modifiers
+### Annotations
+
+```lua
+>>> r 8d6 "Fire Ball"
+28 Fire Ball <= (6+4+3+5+4+2+1+3)
+```
+
+### Modifiers
 
 You can append a modifier, some positive or negative number, to dice.
 
 ```python
->>> r! 2d10+4
-14 <- (6, 4)+4
+>>> r 2d10+4
+14 <= (6+4)+4
 ```
-
-> Don't include spaces by accident
->
-> ```python
-> >>> r! 1d20 +4
-> Error: Unable to parse roll
-> ```
-
-## Roll Methods
 
 ### Advantage/Disadvantage
 
@@ -106,32 +156,32 @@ Rolling with advantage or disadvantage means rolling a second d20. With advantag
 Roll with Advantage
 
 ```js
->>> r!adv d20+5
-7 | [16] <- (2)+5 | (11)+5
+>>> ra d20+5
+7 | [16]
 ```
 
 Roll with Disadvantage
 
 ```js
->>> r!dis d20+5
-[7] | 16 <- (2)+5 | (11)+5
+>>> rd d20+5r
+[7] | 16
 ```
 
 ### Attack Rolls, Saving Throws, and Ability Checks
 
 ```js
->>> r!atk(17) d20+4
-success <- (20)+4 > 17 AC 
+>>> r 20+4 > ac17
+22 <= (18)+4 success
 ```
 
 ```js
->>> r!sav(16, 'WIS') d20+4
-fail <- (3)+4 < 16 WIS DC
+>>> r d20+4 > dc16 "WIS"
+7 <= (3)+4 failure
 ```
 
 ```js
->>> r!chk(14, 'Athletics') d20+4
-succeed <- (11)+4 > 14 Athletics DC
+>>> r d20+4 "Athletics"
+18 <= (14)+4
 ```
 
 ### Critical Hit
@@ -139,7 +189,7 @@ succeed <- (11)+4 > 14 Athletics DC
 Critical hit calculations are based on standard 5e rules: double the amount of dice rolled, then add modifiers
 
 ```lua
->>> r!crit 3d8+4
+>>> rcrit 3d8+4
 38 <- 2*(8, 3, 6)+4
 ```
 
@@ -148,13 +198,13 @@ Critical hit calculations are based on standard 5e rules: double the amount of d
 Reroll any twos
 
 ```lua
->>> r!rr(2) 4d12
+>>> rr(2) 4d12
 ```
 
 Reroll any ones and twos
 
 ```lua
->>> r!rr(1, 2) 4d12
+>>> rr(1, 2) 4d12
 ```
 
 ### Keep Highest
@@ -162,7 +212,7 @@ Reroll any ones and twos
 Keep the two highest rolls
 
 ```lua
->>> r!kh(2) 4d12
+>>> rkh(2) 4d12
 ```
 
 ### Keep Lowest
@@ -170,7 +220,7 @@ Keep the two highest rolls
 Keep the two lowest rolls
 
 ```lua
->>> r!kl(2) 4d12
+>>> rkl(2) 4d12
 ```
 
 ### Drop Highest
@@ -178,7 +228,7 @@ Keep the two lowest rolls
 Drops the two highest rolls
 
 ```lua
->>> r!dh(2) 4d12
+>>> rdh(2) 4d12
 ```
 
 ### Drop Lowest
@@ -186,70 +236,35 @@ Drops the two highest rolls
 Drop the two lowest rolls
 
 ```lua
->>> r!dl(2) 4d12
+>>> rdl(2) 4d12
 ```
 
-## Bindings
+## Named Rolls
 
-You can bind values, like a dice or number, to a name. This makes it easier to save and reuse results.
+You can name rolls and results for reuse.
 
-```rust
->>> my_roll := r! d20
+Create a reusable combo:
+
+```python
+>>> combo = 8d6 "Fireball" & 1d4 "Ray of Frost"
+>>> r combo
+8  Fireball        [2 + 5 + 1]
+7  Ray of Frost    [3 + 4]
+```
+
+Save the result of a roll:
+
+```python
+>>> my_roll = r d20
 >>> my_roll
 7
 ```
 
 Bind new value (notice `=` instead of `:=`)
 
-```lua
->>> my_roll = r! d20
+```python
+>>> my_roll = r d20
 2
 ```
 
 > There are some other rules/restrictions on binding names. Please see the [rollang specification](../dev/spec.md) for details
-
-## Rollsets
-
-Rollang supports collection of named rolls, called `Rollsets`.
-
-There are built-in rollsets, but you can also define your own.
-
-### Ability Scores
-
-`ability_scores` is a default binding that generates ability scores according to the instructions in the [Basic Rules#DetermineAbilityScores](https://www.dndbeyond.com/sources/basic-rules/step-by-step-characters#3DetermineAbilityScores) on DnDBeyond
-
-```js
->>> r!rr(1) dnd['Ability Scores']
-STR 15
-DEX 14 
-CON 11 
-INT 17 
-WIS 10
-CHA 12
-```
-
-### User-Defined Rollsets
-
-```go
->>> party_initiative := {'Utankh': d20-1, 'Mythelia': d20+1, 'Boro-Boro': d20}
-```
-
-```lua
->>> r! party_initiative['Mythelia']
-17 <- (16)+1
-```
-
-### Initiative
-
-For initiative, provide a rollset of your players
-
-```rust
->>> r!init(party_initiative)
-Mythelia    16
-Boro-Boro   12
-Utankh      4
-```
-
-## Further Reading
-
-There are more details in the [spec](..dev/spec), but this is mostly for developers!
